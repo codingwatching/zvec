@@ -1,0 +1,10 @@
+include(${PROJECT_ROOT_DIR}/cmake/bazel.cmake)
+include(${PROJECT_ROOT_DIR}/cmake/option.cmake)
+
+cc_directory(framework)
+cc_directory(algorithm)
+cc_directory(metric)
+cc_directory(quantizer)
+cc_directory(utility)
+cc_directory(interface)
+cc_directory(mixed_reducer)

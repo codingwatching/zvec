@@ -1,0 +1,28 @@
+set(BUILD_TESTING OFF CACHE BOOL "Disable Unit Tests" FORCE)
+set(WITH_GFLAGS OFF CACHE BOOL "Disable find_package(gflags) in glog" FORCE)
+set(WITH_UNWIND OFF CACHE BOOL "Disable find_package(unwind) in glog" FORCE)
+set(HAVE_LIB_GFLAGS TRUE CACHE BOOL "")
+
+add_compile_options(-Wno-deprecated-declarations)
+
+set(GLOG_SRC_DIR ${CMAKE_CURRENT_SOURCE_DIR}/glog-0.5.0)
+set(GLOG_PATCH ${CMAKE_CURRENT_SOURCE_DIR}/glog.patch)
+apply_patch_once("glog_fix" "${GLOG_SRC_DIR}" "${GLOG_PATCH}")
+
+add_subdirectory(glog-0.5.0)
+add_dependencies(glog gflags)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(glog PRIVATE -Wno-sign-compare)
+endif()
+
+get_target_property(glog_BINARY_DIR glog BINARY_DIR)
+get_target_property(glog_SOURCE_DIR glog SOURCE_DIR)
+# get_target_property(GLOG_INCLUDE_DIRS glog INTERFACE_INCLUDE_DIRECTORIES)
+
+set(GLOG_INCLUDE_DIRS ${glog_BINARY_DIR} ${glog_SOURCE_DIR}/src)
+set(GLOG_FOUND TRUE PARENT_SCOPE)
+set(GLOG_INCLUDE_DIR ${GLOG_INCLUDE_DIRS} PARENT_SCOPE)
+set(GLOG_INCLUDE_DIRS ${GLOG_INCLUDE_DIRS} PARENT_SCOPE)
+set(GLOG_LIBRARY $<TARGET_FILE:glog> PARENT_SCOPE)
+set(GLOG_LIBRARIES $<TARGET_FILE:glog> PARENT_SCOPE)

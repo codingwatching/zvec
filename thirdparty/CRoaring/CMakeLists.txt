@@ -1,0 +1,17 @@
+set(ENABLE_ROARING_TESTS OFF CACHE BOOL "Disable testing in CRoaring" FORCE)
+
+add_subdirectory(CRoaring-2.0.4)
+
+if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_compile_options(roaring PRIVATE 
+        -Wno-unused-parameter 
+        -Wno-unused-but-set-variable
+    )
+endif()
+
+get_target_property(roaring_SOURCE_DIR roaring INTERFACE_SOURCE_DIR)
+set(ROARING_FOUND TRUE PARENT_SCOPE)
+set(ROARING_INCLUDE_DIR ${roaring_SOURCE_DIR}/include PARENT_SCOPE)
+set(ROARING_INCLUDE_DIRS ${roaring_SOURCE_DIR}/include PARENT_SCOPE)
+set(ROARING_LIBRARY $<TARGET_FILE:roaring> PARENT_SCOPE)
+set(ROARING_LIBRARIES $<TARGET_FILE:roaring> PARENT_SCOPE)
