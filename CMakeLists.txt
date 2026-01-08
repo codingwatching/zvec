@@ -11,6 +11,22 @@ if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
     set(CMAKE_SHARED_LINKER_FLAGS "${CMAKE_SHARED_LINKER_FLAGS} -Wl,--no-as-needed")
 endif()
 
+set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+find_program(CLANG_TIDY_EXE clang-tidy)
+if(CLANG_TIDY_EXE AND NOT CMAKE_CROSSCOMPILING)
+    set(CMAKE_CXX_CLANG_TIDY
+            "${CLANG_TIDY_EXE}"
+            "-p=${CMAKE_BINARY_DIR}"
+            "--header-filter=${CLANG_TIDY_CHECK_HEADER_FILTER}"
+    )
+
+    message(STATUS "Enabled clang-tidy: ${CLANG_TIDY_EXE}")
+else()
+    message(WARNING "clang-tidy not found. Install via:\n"
+            "   macOS: brew install llvm && export PATH=\"/opt/homebrew/opt/llvm/bin:\$PATH\"\n"
+            "   Linux: sudo apt install clang-tidy-18 && sudo update-alternatives --set clang-tidy /usr/bin/clang-tidy-18")
+endif()
+
 if(NOT DEFINED PROJECT_ROOT_DIR OR NOT PROJECT_ROOT_DIR)
     set(PROJECT_ROOT_DIR ${CMAKE_SOURCE_DIR} CACHE PATH "Root directory of the project" FORCE)
 endif()

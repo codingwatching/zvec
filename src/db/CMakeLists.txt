@@ -6,6 +6,7 @@ cc_proto_library(
     SRCS proto/*.proto
     PROTOROOT ./
   )
+set_target_properties(zvec_proto PROPERTIES CXX_CLANG_TIDY "")
 
 cc_directory(common)
 cc_directory(index)

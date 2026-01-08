@@ -4,6 +4,7 @@ project(thirdparty)
 
 include(${PROJECT_ROOT_DIR}/cmake/utils.cmake)
 
+set(CMAKE_CXX_CLANG_TIDY "")
 set(CMAKE_MACOSX_RPATH ON)
 set(CMAKE_POSITION_INDEPENDENT_CODE ON)
 set(EXTERNAL_BINARY_DIR ${CMAKE_BINARY_DIR}/external)
