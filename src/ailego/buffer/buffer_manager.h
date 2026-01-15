@@ -105,7 +105,6 @@ struct BufferID {
     BufferID buffer_id{};
     buffer_id.type = TYPE::VECTOR;
     buffer_id.file_name = file_name;
-    struct stat file_stat;
     buffer_id.pos.vector.offset = offset;
     buffer_id.pos.vector.length = length;
     return buffer_id;
