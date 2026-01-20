@@ -13,7 +13,7 @@
 ##  1.3. Build a C/C++ static or shared library
 ##    cc_library(
 ##        NAME <name>
-##        [STATIC] [SHARED] [STRICT] [ALWAYS_LINK] [EXCLUDE] [PACKED]
+##        [STATIC] [SHARED] [STRICT] [ALWAYS_LINK] [EXCLUDE] [PACKED] [SRCS_NO_GLOB]
 ##        SRCS <file1> [file2 ...]
 ##        [INCS dir1 ...]
 ##        [PUBINCS public_dir1 ...]
@@ -814,7 +814,7 @@ endfunction()
 function(cc_library)
   cmake_parse_arguments(
       CC_ARGS
-      "STATIC;SHARED;EXCLUDE;PACKED;SRCS_NO_GLOB"  # ← 新增 SRCS_NO_GLOB 到布尔选项
+      "STATIC;SHARED;EXCLUDE;PACKED;SRCS_NO_GLOB"
       "NAME;VERSION"
       "SRCS;INCS;PUBINCS;DEFS;LIBS;CFLAGS;CXXFLAGS;LDFLAGS;DEPS;PACKED_EXCLUDES"
       ${ARGN}
