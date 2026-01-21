@@ -1,7 +1,7 @@
 #include <future>
 #include <string>
 #include <vector>
-#include <ailego/buffer/buffer_manager.h>
+#include <zvec/ailego/buffer/buffer_manager.h>
 #include <ailego/utility/math_helper.h>
 #include <ailego/utility/memory_helper.h>
 #include <algorithm/hnsw/hnsw_params.h>

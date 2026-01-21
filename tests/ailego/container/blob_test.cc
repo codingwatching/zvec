@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <type_traits>
-#include <ailego/container/blob.h>
+#include <zvec/ailego/container/blob.h>
 #include <gtest/gtest.h>
 
 using namespace zvec;

@@ -13,10 +13,10 @@
 // limitations under the License.
 #pragma once
 
-#include "index_helper.h"
-#include "index_holder.h"
-#include "index_meta.h"
-#include "index_runner.h"
+#include <zvec/core/framework/index_helper.h>
+#include <zvec/core/framework/index_holder.h>
+#include <zvec/core/framework/index_meta.h>
+#include <zvec/core/framework/index_runner.h>
 
 namespace zvec {
 namespace core {

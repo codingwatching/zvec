@@ -14,22 +14,21 @@
 
 #pragma once
 
-#include <ailego/internal/platform.h>
-
+#include <cstdint>
 namespace zvec {
 namespace ailego {
 
-/*! Crc32c Hash
- */
-struct Crc32c {
-  //! Compute the CRC32C checksum for the source data buffer
-  static uint32_t Hash(const void *data, size_t len, uint32_t crc);
-
-  //! Compute the CRC32C checksum for the source data buffer
-  static inline uint32_t Hash(const void *data, size_t len) {
-    return Hash(data, len, 0u);
+//! Jump consistent hash algorithm (https://arxiv.org/pdf/1406.2294.pdf)
+static inline int32_t JumpHash(uint64_t key, int32_t num_buckets) {
+  int64_t b = 1, j = 0;
+  while (j < num_buckets) {
+    b = j;
+    key = key * 2862933555777941757ULL + 1;
+    j = (int64_t)(double(b + 1) *
+                  (double(1LL << 31) / double((key >> 33) + 1)));
   }
-};
+  return (int32_t)b;
+}
 
 }  // namespace ailego
 }  // namespace zvec

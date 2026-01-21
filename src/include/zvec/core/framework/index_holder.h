@@ -17,12 +17,11 @@
 #include <cstring>
 #include <list>
 #include <memory>
-#include <random>
-#include <string>
 #include <vector>
-#include "ailego/container/vector.h"
-#include "index_features.h"
-#include "index_meta.h"
+#include <zvec/ailego/container/vector.h>
+#include <zvec/ailego/internal/platform.h>
+#include <zvec/core/framework/index_features.h>
+#include <zvec/core/framework/index_meta.h>
 
 namespace zvec {
 namespace core {

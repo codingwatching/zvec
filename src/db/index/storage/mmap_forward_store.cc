@@ -14,7 +14,7 @@
 
 #include "mmap_forward_store.h"
 #include <memory>
-#include <ailego/logger/logger.h>
+#include <zvec/ailego/logger/logger.h>
 #include <arrow/acero/options.h>
 #include <arrow/compute/api.h>
 #include <arrow/datum.h>

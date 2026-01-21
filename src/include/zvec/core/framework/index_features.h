@@ -18,7 +18,7 @@
 #include <random>
 #include <string>
 #include <vector>
-#include "index_meta.h"
+#include <zvec/core/framework/index_meta.h>
 
 namespace zvec {
 namespace core {

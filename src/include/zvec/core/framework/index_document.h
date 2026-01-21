@@ -15,8 +15,8 @@
 
 #include <cstdint>
 #include <string>
-#include <ailego/container/heap.h>
-#include "index_storage.h"
+#include <zvec/ailego/container/heap.h>
+#include <zvec/core/framework/index_storage.h>
 
 namespace zvec {
 namespace core {

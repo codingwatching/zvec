@@ -17,11 +17,11 @@
 #include <iomanip>
 #include <iostream>
 #include <mutex>
-#include <ailego/hash/crc32c.h>
-#include <ailego/io/file.h>
+#include <zvec/ailego/hash/crc32c.h>
+#include <zvec/ailego/io/file.h>
 #include <ailego/parallel/lock.h>
-#include <ailego/parallel/thread_pool.h>
-#include <ailego/utility/time_helper.h>
+#include <zvec/ailego/parallel/thread_pool.h>
+#include <zvec/ailego/utility/time_helper.h>
 #include <zvec/ailego/utility/string_helper.h>
 #include "zvec/core/framework/index_plugin.h"
 #include "zvec/core/interface/index_factory.h"

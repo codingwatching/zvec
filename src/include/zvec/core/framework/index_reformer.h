@@ -13,8 +13,8 @@
 // limitations under the License.
 #pragma once
 
-#include "index_document.h"
-#include "index_meta.h"
+#include <zvec/core/framework/index_document.h>
+#include <zvec/core/framework/index_meta.h>
 
 namespace zvec {
 namespace core {

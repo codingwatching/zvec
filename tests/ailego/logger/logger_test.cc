@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-#include <ailego/logger/logger.h>
-#include <ailego/parallel/thread_pool.h>
+#include <zvec/ailego/logger/logger.h>
+#include <zvec/ailego/parallel/thread_pool.h>
 #include <gtest/gtest.h>
 
 using namespace zvec;

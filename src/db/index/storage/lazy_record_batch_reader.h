@@ -14,7 +14,7 @@
 // limitations under the License.
 #pragma once
 
-#include <ailego/buffer/buffer_manager.h>
+#include <zvec/ailego/buffer/buffer_manager.h>
 #include <arrow/ipc/reader.h>
 #include <parquet/arrow/reader.h>
 #include "db/common/constants.h"

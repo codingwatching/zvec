@@ -17,7 +17,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <ailego/logger/logger.h>
+#include <zvec/ailego/logger/logger.h>
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
 #include <gtest/gtest.h>

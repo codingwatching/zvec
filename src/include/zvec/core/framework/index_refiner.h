@@ -15,11 +15,11 @@
 #pragma once
 
 #include <memory>
-#include <ailego/container/heap.h>
-#include "index_context.h"
-#include "index_helper.h"
-#include "index_searcher.h"
-#include "index_streamer.h"
+#include <zvec/ailego/container/heap.h>
+#include <zvec/core/framework/index_context.h>
+#include <zvec/core/framework/index_helper.h>
+#include <zvec/core/framework/index_searcher.h>
+#include <zvec/core/framework/index_streamer.h>
 
 namespace zvec {
 namespace core {

@@ -17,7 +17,7 @@
 #include <initializer_list>
 #include <stdexcept>
 #include <string>
-#include <ailego/utility/type_helper.h>
+#include <zvec/ailego/utility/type_helper.h>
 
 namespace zvec {
 namespace ailego {

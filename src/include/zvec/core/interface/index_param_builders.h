@@ -1,12 +1,23 @@
-#ifndef ZVEC_INDEX_PARAM_BUILDERS_H
-#define ZVEC_INDEX_PARAM_BUILDERS_H
+// Copyright 2025-present the zvec project
+//
+// Licensed under the Apache License, Version 2.0 (the "License");
+// you may not use this file except in compliance with the License.
+// You may obtain a copy of the License at
+//
+//     http://www.apache.org/licenses/LICENSE-2.0
+//
+// Unless required by applicable law or agreed to in writing, software
+// distributed under the License is distributed on an "AS IS" BASIS,
+// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+// See the License for the specific language governing permissions and
+// limitations under the License.
+
 #pragma once
 
 #include <memory>
-#include "index_param.h"
+#include <zvec/core/interface/index_param.h>
 
 namespace zvec::core_interface {
-
 
 // struct ConditionalIndexParam {
 //     // predicate / rule / threshold
@@ -19,7 +30,7 @@ template <typename ActualIndexParamBuilderType, typename ActualIndexParamType>
 class BaseIndexParamBuilder {  //  : public
                                //  std::enable_shared_from_this<Resource>
  public:
-  BaseIndexParamBuilder() : param(std::make_shared<ActualIndexParamType>()) {};
+  BaseIndexParamBuilder() : param(std::make_shared<ActualIndexParamType>()){};
   virtual ~BaseIndexParamBuilder() = default;
 
   ActualIndexParamBuilderType &WithVersion(int version) {
@@ -336,6 +347,6 @@ class SCANNIndexParamBuilder {
     return param_ptr;
   }
 };
+
 }  // namespace predefined
 }  // namespace zvec::core_interface
-#endif  // ZVEC_INDEX_PARAM_BUILDERS_H

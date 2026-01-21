@@ -17,8 +17,8 @@
 #include <cmath>
 #include <cstring>
 #include <numeric>
-#include <stdexcept>
 #include <ailego/math/normalizer.h>
+#include <zvec/ailego/internal/platform.h>
 
 namespace zvec {
 namespace ailego {
@@ -120,7 +120,7 @@ static inline void ExpandCandidateDistribution(
         (*expand_distribution)[j] = value;
       }
     }  // end of for
-  }  // end of for
+  }    // end of for
 }
 
 /*! Compute quantization threshold bins

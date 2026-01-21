@@ -13,14 +13,14 @@
 // limitations under the License.
 #pragma once
 
-#include <ailego/container/params.h>
-#include <ailego/container/vector.h>
-#include <ailego/parallel/thread_pool.h>
-#include "index_bundle.h"
-#include "index_features.h"
-#include "index_meta.h"
-#include "index_module.h"
-#include "index_threads.h"
+#include <zvec/ailego/container/params.h>
+#include <zvec/ailego/container/vector.h>
+#include <zvec/ailego/parallel/thread_pool.h>
+#include <zvec/core/framework/index_bundle.h>
+#include <zvec/core/framework/index_features.h>
+#include <zvec/core/framework/index_meta.h>
+#include <zvec/core/framework/index_module.h>
+#include <zvec/core/framework/index_threads.h>
 
 namespace zvec {
 namespace core {

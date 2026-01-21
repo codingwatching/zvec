@@ -15,7 +15,7 @@
 #include <cmath>
 #include <random>
 #include <ailego/utility/bit_string_helper.h>
-#include <ailego/utility/time_helper.h>
+#include <zvec/ailego/utility/time_helper.h>
 #include <gtest/gtest.h>
 
 using namespace zvec;

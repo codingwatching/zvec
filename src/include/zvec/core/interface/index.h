@@ -13,15 +13,12 @@
 // limitations under the License.
 
 #pragma once
-#include <cmath>
+
 #include <cstdint>
-#include <iostream>
-#include <map>
 #include <memory>
 #include <string>
 #include <variant>
 #include <vector>
-#include <magic_enum/magic_enum.hpp>
 #include <zvec/core/framework/index_context.h>
 #include <zvec/core/framework/index_converter.h>
 #include <zvec/core/framework/index_factory.h>
@@ -33,9 +30,8 @@
 #include <zvec/core/framework/index_reformer.h>
 #include <zvec/core/framework/index_searcher.h>
 #include <zvec/core/framework/index_storage.h>
+#include <zvec/core/interface/index_param.h>
 #include <zvec/core/mixed_reducer/mixed_reducer_params.h>
-#include "index_param.h"
-#include "index_param_builders.h"
 
 namespace zvec::core_interface {
 
@@ -102,11 +98,6 @@ struct SearchResult {
   std::vector<std::string> reverted_vector_list_{};
   std::vector<std::string> reverted_sparse_values_list_{};
 };
-
-// eliminate the pre-alloc of the context pool
-thread_local static std::array<core::IndexContext::Pointer,
-                               (magic_enum::enum_count<IndexType>() - 1) * 2>
-    _context_list;
 
 class Index {
  public:
@@ -201,24 +192,8 @@ class Index {
   virtual int CreateAndInitStreamer(const BaseIndexParam &param) = 0;
 
  protected:
-  bool init_context() {
-    context_index_ = (magic_enum::enum_integer(param_.index_type) - 1) * 2 +
-                     static_cast<size_t>(is_sparse_);
-    if (_context_list[context_index_] == nullptr) {
-      if ((_context_list[context_index_] = streamer_->create_context()) ==
-          nullptr) {
-        LOG_ERROR("Failed to create context");
-        return false;
-      }
-    }
-    return true;
-  }
-
-  core::IndexContext::Pointer &acquire_context() {
-    init_context();
-    return _context_list[context_index_];
-  }
-
+  bool init_context();
+  core::IndexContext::Pointer &acquire_context();
   void release_context() {
     // context_list_[get_context_index()]->reset();
   }

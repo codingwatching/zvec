@@ -16,7 +16,7 @@
 #include <memory>
 #include <string>
 #include <vector>
-#include <ailego/buffer/buffer_manager.h>
+#include <zvec/ailego/buffer/buffer_manager.h>
 #include <arrow/api.h>
 #include <arrow/compute/api.h>
 #include <arrow/filesystem/filesystem.h>

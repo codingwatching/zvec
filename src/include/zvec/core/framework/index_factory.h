@@ -11,22 +11,23 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #pragma once
 
-#include <ailego/pattern/factory.h>
-#include "index_builder.h"
-#include "index_cluster.h"
-#include "index_converter.h"
-#include "index_dumper.h"
-#include "index_logger.h"
-#include "index_metric.h"
-#include "index_reducer.h"
-#include "index_refiner.h"
-#include "index_reformer.h"
-#include "index_searcher.h"
-#include "index_storage.h"
-#include "index_streamer.h"
-#include "index_trainer.h"
+#include <zvec/ailego/pattern/factory.h>
+#include <zvec/core/framework/index_builder.h>
+#include <zvec/core/framework/index_cluster.h>
+#include <zvec/core/framework/index_converter.h>
+#include <zvec/core/framework/index_dumper.h>
+#include <zvec/core/framework/index_logger.h>
+#include <zvec/core/framework/index_metric.h>
+#include <zvec/core/framework/index_reducer.h>
+#include <zvec/core/framework/index_refiner.h>
+#include <zvec/core/framework/index_reformer.h>
+#include <zvec/core/framework/index_searcher.h>
+#include <zvec/core/framework/index_storage.h>
+#include <zvec/core/framework/index_streamer.h>
+#include <zvec/core/framework/index_trainer.h>
 
 namespace zvec {
 namespace core {

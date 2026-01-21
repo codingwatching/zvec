@@ -11,16 +11,16 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #pragma once
 
-#include <atomic>
-#include "index_context.h"
-#include "index_meta.h"
-#include "index_metric.h"
-#include "index_module.h"
-#include "index_provider.h"
-#include "index_runner.h"
-#include "index_stats.h"
+#include <zvec/core/framework/index_context.h>
+#include <zvec/core/framework/index_meta.h>
+#include <zvec/core/framework/index_metric.h>
+#include <zvec/core/framework/index_module.h>
+#include <zvec/core/framework/index_provider.h>
+#include <zvec/core/framework/index_runner.h>
+#include <zvec/core/framework/index_stats.h>
 
 namespace zvec {
 namespace core {

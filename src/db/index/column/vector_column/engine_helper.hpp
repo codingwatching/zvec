@@ -19,7 +19,7 @@
 #include <zvec/db/doc.h>
 #include <zvec/db/query_params.h>
 #include <zvec/db/status.h>
-#include "vector_column_indexer.h"
+#include "zvec/core/interface/index_param_builders.h"
 #include "vector_column_params.h"
 
 

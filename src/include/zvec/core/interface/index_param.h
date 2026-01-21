@@ -11,28 +11,18 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-//
-// Created by wangjianning.wjn on 8/28/25.
-//
 
-#ifndef ZVEC_INDEX_PARAM_H
-#define ZVEC_INDEX_PARAM_H
 #pragma once
 
-#include <cmath>
 #include <cstdint>
-#include <iostream>
-#include <map>
 #include <memory>
 #include <string>
 #include <vector>
-#include <ailego/encoding/json.h>
-#include <ailego/parallel/thread_pool.h>
-#include <magic_enum/magic_enum.hpp>
+#include <zvec/ailego/encoding/json.h>
+#include <zvec/ailego/parallel/thread_pool.h>
 #include <zvec/core/framework/index_filter.h>
 #include <zvec/core/framework/index_meta.h>
 #include <zvec/core/interface/constants.h>
-#include <zvec/core/interface/utils/utils.h>
 
 namespace zvec::core_interface {
 #define MAX_DIMENSION 65536
@@ -131,20 +121,10 @@ struct QuantizerParam : public SerializableBase {
  protected:
   friend class BaseIndexParam;
   virtual ailego::JsonObject SerializeToJsonObject(
-      bool omit_empty_value = false) const override {
-    ailego::JsonObject json_obj;
-    if (!omit_empty_value || type != QuantizerType::kNone) {
-      json_obj.set("type",
-                   zvec::ailego::JsonValue(magic_enum::enum_name(type).data()));
-    }
-    return json_obj;
-  }
+      bool omit_empty_value = false) const override;
 
   virtual bool DeserializeFromJsonObject(
-      const ailego::JsonObject &json_obj) override {
-    DESERIALIZE_ENUM_FIELD(json_obj, type, QuantizerType);
-    return true;
-  }
+      const ailego::JsonObject &json_obj) override;
 };
 
 // preprocessor
@@ -337,4 +317,3 @@ struct HNSWIndexParam : public BaseIndexParam {
 };
 
 }  // namespace zvec::core_interface
-#endif  // ZVEC_INDEX_PARAM_H

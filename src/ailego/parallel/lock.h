@@ -20,8 +20,9 @@
 #if __cplusplus >= 201703L
 #include <shared_mutex>
 #endif
-#include <ailego/internal/platform.h>
 #include <ailego/pattern/defer.h>
+#include <zvec/ailego/container/vector.h>
+#include <zvec/ailego/internal/platform.h>
 
 namespace zvec {
 namespace ailego {
@@ -84,7 +85,8 @@ class SpinMutex {
 
   //! Locking
   void lock(void) {
-    while (flag_.test_and_set(std::memory_order_acquire));
+    while (flag_.test_and_set(std::memory_order_acquire))
+      ;
   }
 
   //! Try locking
