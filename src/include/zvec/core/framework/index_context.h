@@ -15,13 +15,13 @@
 #pragma once
 
 #include <memory>
-#include <ailego/container/params.h>
-#include "index_document.h"
-#include "index_error.h"
-#include "index_filter.h"
-#include "index_groupby.h"
-#include "index_metric.h"
-#include "index_stats.h"
+#include <zvec/ailego/container/params.h>
+#include <zvec/core/framework/index_document.h>
+#include <zvec/core/framework/index_error.h>
+#include <zvec/core/framework/index_filter.h>
+#include <zvec/core/framework/index_groupby.h>
+#include <zvec/core/framework/index_metric.h>
+#include <zvec/core/framework/index_stats.h>
 
 namespace zvec {
 namespace core {

@@ -14,11 +14,11 @@
 #pragma once
 
 #include <memory>
-#include <ailego/container/params.h>
-#include <ailego/math_batch/distance_batch.h>
-#include "index_error.h"
-#include "index_meta.h"
-#include "index_module.h"
+#include <zvec/ailego/container/params.h>
+#include <zvec/ailego/math_batch/utils.h>
+#include <zvec/core/framework/index_error.h>
+#include <zvec/core/framework/index_meta.h>
+#include <zvec/core/framework/index_module.h>
 
 namespace zvec {
 namespace core {

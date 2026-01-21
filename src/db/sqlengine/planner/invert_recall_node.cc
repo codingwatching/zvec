@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include "db/sqlengine/planner/invert_recall_node.h"
-#include <ailego/logger/logger.h>
+#include <zvec/ailego/logger/logger.h>
 #include <arrow/api.h>
 #include "db/sqlengine/planner/invert_search.h"
 

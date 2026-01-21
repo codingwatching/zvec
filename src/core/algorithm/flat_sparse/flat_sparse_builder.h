@@ -15,7 +15,7 @@
 #pragma once
 
 #include <cstdint>
-#include <ailego/parallel/thread_pool.h>
+#include <zvec/ailego/parallel/thread_pool.h>
 #include <zvec/core/framework/index_builder.h>
 #include <zvec/core/framework/index_dumper.h>
 #include <zvec/core/framework/index_framework.h>

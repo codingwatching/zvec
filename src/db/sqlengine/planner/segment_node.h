@@ -17,7 +17,7 @@
 #include <atomic>
 #include <memory>
 #include <optional>
-#include <ailego/parallel/thread_pool.h>
+#include <zvec/ailego/parallel/thread_pool.h>
 #include <arrow/acero/api.h>
 #include <arrow/api.h>
 #include <arrow/util/async_generator.h>

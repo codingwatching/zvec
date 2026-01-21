@@ -12,9 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
+#include <zvec/ailego/encoding/json.h>
 #include <zvec/core/framework/index_meta.h>
-#include <sstream>
-#include <ailego/encoding/json.h>
 
 namespace zvec {
 namespace core {

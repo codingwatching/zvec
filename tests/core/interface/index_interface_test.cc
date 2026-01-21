@@ -17,7 +17,7 @@
 #include <iostream>
 #include <unordered_map>
 #include <gtest/gtest.h>
-#include "ailego/buffer/buffer_manager.h"
+#include "zvec/ailego/buffer/buffer_manager.h"
 #include "zvec/core/interface/index.h"
 #include "zvec/core/interface/index_factory.h"
 #include "zvec/core/interface/index_param.h"

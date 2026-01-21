@@ -14,7 +14,7 @@
 
 #pragma once
 
-#include <ailego/container/hypercube.h>
+#include <zvec/ailego/container/hypercube.h>
 
 namespace zvec {
 namespace ailego {

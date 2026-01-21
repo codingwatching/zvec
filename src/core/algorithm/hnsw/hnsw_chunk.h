@@ -19,7 +19,7 @@
 #include <atomic>
 #include <cstddef>
 #include <mutex>
-#include <ailego/internal/platform.h>
+#include <zvec/ailego/container/vector.h>
 #include <ailego/utility/memory_helper.h>
 #include <zvec/ailego/utility/string_helper.h>
 #include <zvec/core/framework/index_error.h>

@@ -15,9 +15,9 @@
 #pragma once
 
 #include <string.h>
-#include <ailego/container/heap.h>
+#include <zvec/ailego/container/heap.h>
 #include <ailego/utility/memory_helper.h>
-#include "ailego/logger/logger.h"
+#include <zvec/ailego/logger/logger.h>
 #include <zvec/core/framework/index_dumper.h>
 #include <zvec/core/framework/index_error.h>
 #include <zvec/core/framework/index_storage.h>

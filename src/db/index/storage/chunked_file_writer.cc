@@ -14,7 +14,7 @@
 
 #include "chunked_file_writer.h"
 #include <fstream>
-#include <ailego/logger/logger.h>
+#include <zvec/ailego/logger/logger.h>
 #include <arrow/ipc/writer.h>
 #include <parquet/arrow/writer.h>
 #include <parquet/exception.h>

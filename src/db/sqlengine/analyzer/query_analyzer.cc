@@ -14,7 +14,7 @@
 
 #include "query_analyzer.h"
 #include <cstddef>
-#include <ailego/logger/logger.h>
+#include <zvec/ailego/logger/logger.h>
 #include <zvec/ailego/pattern/expected.hpp>
 #include <zvec/ailego/utility/string_helper.h>
 #include <zvec/core/framework/index_meta.h>

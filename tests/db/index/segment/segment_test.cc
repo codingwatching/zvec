@@ -22,7 +22,7 @@
 #include <cstdint>
 #include <memory>
 #include <thread>
-#include <ailego/buffer/buffer_manager.h>
+#include <zvec/ailego/buffer/buffer_manager.h>
 #include <arrow/array/array_binary.h>
 #include <arrow/io/file.h>
 #include <arrow/ipc/reader.h>

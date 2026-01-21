@@ -11,21 +11,22 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #pragma once
 
-#include "index_builder.h"
-#include "index_bundle.h"
-#include "index_cluster.h"
-#include "index_converter.h"
-#include "index_factory.h"
-#include "index_filter.h"
-#include "index_flow.h"
-#include "index_helper.h"
-#include "index_holder.h"
-#include "index_mapping.h"
-#include "index_memory.h"
-#include "index_meta.h"
-#include "index_plugin.h"
-#include "index_runner.h"
-#include "index_searcher.h"
-#include "index_trainer.h"
+#include <zvec/core/framework/index_builder.h>
+#include <zvec/core/framework/index_bundle.h>
+#include <zvec/core/framework/index_cluster.h>
+#include <zvec/core/framework/index_converter.h>
+#include <zvec/core/framework/index_factory.h>
+#include <zvec/core/framework/index_filter.h>
+#include <zvec/core/framework/index_flow.h>
+#include <zvec/core/framework/index_helper.h>
+#include <zvec/core/framework/index_holder.h>
+#include <zvec/core/framework/index_mapping.h>
+#include <zvec/core/framework/index_memory.h>
+#include <zvec/core/framework/index_meta.h>
+#include <zvec/core/framework/index_plugin.h>
+#include <zvec/core/framework/index_runner.h>
+#include <zvec/core/framework/index_searcher.h>
+#include <zvec/core/framework/index_trainer.h>

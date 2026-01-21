@@ -18,7 +18,7 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <vector>
-#include <ailego/logger/logger.h>
+#include <zvec/ailego/logger/logger.h>
 #include <zvec/core/framework/index_meta.h>
 #include <zvec/db/schema.h>
 #include "db/common/constants.h"

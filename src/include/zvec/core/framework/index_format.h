@@ -16,8 +16,8 @@
 #include <cstring>
 #include <random>
 #include <string>
-#include <ailego/hash/crc32c.h>
-#include <ailego/utility/time_helper.h>
+#include <zvec/ailego/hash/crc32c.h>
+#include <zvec/ailego/utility/time_helper.h>
 
 namespace zvec {
 namespace core {

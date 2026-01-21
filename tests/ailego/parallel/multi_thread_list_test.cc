@@ -14,7 +14,7 @@
 
 #include <iostream>
 #include <memory>
-#include "ailego/parallel/thread_pool.h"
+#include <zvec/ailego/parallel/thread_pool.h>
 
 #define private public
 #include <ailego/parallel/multi_thread_list.h>
@@ -29,7 +29,7 @@ using namespace std;
 struct Item {
   uint32_t a_;
   std::string b_;
-  Item() {};
+  Item(){};
   Item(uint32_t a, std::string b) : a_(a), b_(b) {}
 };
 
@@ -182,7 +182,7 @@ TEST(MultiThreadListTest, ConsumeStopResume) {
 struct MoveableItem {
   uint32_t a_;
   std::string b_;
-  MoveableItem() {};
+  MoveableItem(){};
   MoveableItem(uint32_t a, std::string b) : a_(a), b_(b) {}
 
   MoveableItem(const MoveableItem &) = delete;

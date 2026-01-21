@@ -15,15 +15,15 @@
 #pragma once
 
 #include <atomic>
-#include "index_context.h"
-#include "index_dumper.h"
-#include "index_meta.h"
-#include "index_metric.h"
-#include "index_module.h"
-#include "index_provider.h"
-#include "index_stats.h"
-#include "index_threads.h"
-#include "index_trainer.h"
+#include <zvec/core/framework/index_context.h>
+#include <zvec/core/framework/index_dumper.h>
+#include <zvec/core/framework/index_meta.h>
+#include <zvec/core/framework/index_metric.h>
+#include <zvec/core/framework/index_module.h>
+#include <zvec/core/framework/index_provider.h>
+#include <zvec/core/framework/index_stats.h>
+#include <zvec/core/framework/index_threads.h>
+#include <zvec/core/framework/index_trainer.h>
 
 namespace zvec {
 namespace core {
@@ -415,7 +415,7 @@ class IndexRunner : public IndexModule {
   }
 
   //! Print debug info
-  virtual void print_debug_info() {};
+  virtual void print_debug_info(){};
 
   //! Create a searcher context
   virtual Context::Pointer create_context(void) const {

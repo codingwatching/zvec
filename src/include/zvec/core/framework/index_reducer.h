@@ -14,15 +14,15 @@
 
 #pragma once
 
-#include "ailego/parallel/thread_pool.h"
-#include "index_builder.h"
-#include "index_converter.h"
-#include "index_dumper.h"
-#include "index_error.h"
-#include "index_filter.h"
-#include "index_reformer.h"
-#include "index_stats.h"
-#include "index_streamer.h"
+#include <zvec/ailego/parallel/thread_pool.h>
+#include <zvec/core/framework/index_builder.h>
+#include <zvec/core/framework/index_converter.h>
+#include <zvec/core/framework/index_dumper.h>
+#include <zvec/core/framework/index_error.h>
+#include <zvec/core/framework/index_filter.h>
+#include <zvec/core/framework/index_reformer.h>
+#include <zvec/core/framework/index_stats.h>
+#include <zvec/core/framework/index_streamer.h>
 
 namespace zvec {
 namespace core {

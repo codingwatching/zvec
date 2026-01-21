@@ -11,12 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #pragma once
 
-#include "index_dumper.h"
-#include "index_holder.h"
-#include "index_meta.h"
-#include "index_storage.h"
+#include <zvec/core/framework/index_dumper.h>
+#include <zvec/core/framework/index_holder.h>
+#include <zvec/core/framework/index_meta.h>
+#include <zvec/core/framework/index_storage.h>
 
 namespace zvec {
 namespace core {

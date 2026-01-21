@@ -16,7 +16,7 @@
 #include <cstdint>
 #include <memory>
 #include <string>
-#include <ailego/logger/logger.h>
+#include <zvec/ailego/logger/logger.h>
 #include <arrow/array/builder_binary.h>
 #include <arrow/result.h>
 #include <zvec/ailego/pattern/expected.hpp>

@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include <random>
-#include <ailego/internal/platform.h>
-#include <ailego/parallel/thread_pool.h>
+#include <zvec/ailego/container/vector.h>
+#include <zvec/ailego/parallel/thread_pool.h>
 #include <gtest/gtest.h>
 
 #define protected public

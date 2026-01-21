@@ -16,7 +16,7 @@
 
 #include <map>
 #include <string>
-#include "cube.h"
+#include <zvec/ailego/container/cube.h>
 
 namespace zvec {
 namespace ailego {

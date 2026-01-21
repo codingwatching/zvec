@@ -14,10 +14,10 @@
 #pragma once
 
 #include <atomic>
-#include "index_dumper.h"
-#include "index_holder.h"
-#include "index_meta.h"
-#include "index_stats.h"
+#include <zvec/core/framework/index_dumper.h>
+#include <zvec/core/framework/index_holder.h>
+#include <zvec/core/framework/index_meta.h>
+#include <zvec/core/framework/index_stats.h>
 
 namespace zvec {
 namespace core {

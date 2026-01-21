@@ -20,7 +20,7 @@
 #include <arrow/type_fwd.h>
 #include <zvec/db/status.h>
 #include <zvec/db/type.h>
-#include "ailego/logger/logger.h"
+#include <zvec/ailego/logger/logger.h>
 #include "db/common/constants.h"
 #include "db/common/file_helper.h"
 #include "db/common/global_resource.h"

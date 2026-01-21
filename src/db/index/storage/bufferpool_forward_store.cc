@@ -13,8 +13,8 @@
 // limitations under the License.
 
 #include "bufferpool_forward_store.h"
-#include <ailego/buffer/buffer_manager.h>
-#include <ailego/logger/logger.h>
+#include <zvec/ailego/buffer/buffer_manager.h>
+#include <zvec/ailego/logger/logger.h>
 #include <arrow/acero/exec_plan.h>
 #include <arrow/compute/api.h>
 #include <arrow/filesystem/api.h>

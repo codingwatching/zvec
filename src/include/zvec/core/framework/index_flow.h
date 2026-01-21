@@ -13,8 +13,9 @@
 // limitations under the License.
 #pragma once
 
-#include "index_factory.h"
-
+#include <memory>
+#include <zvec/core/framework/index_reformer.h>
+#include <zvec/core/framework/index_searcher.h>
 namespace zvec {
 namespace core {
 

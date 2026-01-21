@@ -11,12 +11,14 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #pragma once
 
-#include <ailego/utility/type_helper.h>
-#include "index_error.h"
-#include "index_format.h"
-#include "index_version.h"
+#include <zvec/ailego/internal/platform.h>
+#include <zvec/ailego/utility/type_helper.h>
+#include <zvec/core/framework/index_error.h>
+#include <zvec/core/framework/index_format.h>
+#include <zvec/core/framework/index_version.h>
 
 namespace zvec {
 namespace core {

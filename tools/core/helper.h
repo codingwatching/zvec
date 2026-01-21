@@ -18,12 +18,12 @@
 #include <iostream>
 #include <mutex>
 #include <ailego/container/bitmap.h>
-#include <ailego/hash/crc32c.h>
-#include <ailego/io/file.h>
-#include <ailego/logger/logger.h>
+#include <zvec/ailego/hash/crc32c.h>
+#include <zvec/ailego/io/file.h>
+#include <zvec/ailego/logger/logger.h>
 #include <ailego/parallel/lock.h>
-#include <ailego/parallel/thread_pool.h>
-#include <ailego/utility/time_helper.h>
+#include <zvec/ailego/parallel/thread_pool.h>
+#include <zvec/ailego/utility/time_helper.h>
 #include <zvec/ailego/utility/string_helper.h>
 #include "zvec/core/framework/index_error.h"
 #include "zvec/core/framework/index_factory.h"

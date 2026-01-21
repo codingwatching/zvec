@@ -12,8 +12,8 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 #include <ailego/math/norm2_matrix.h>
-#include <ailego/utility/time_helper.h>
-#include <ailego/utility/type_helper.h>
+#include <zvec/ailego/utility/time_helper.h>
+#include <zvec/ailego/utility/type_helper.h>
 #include <zvec/core/framework/index_factory.h>
 #include <zvec/core/quantizer/quantizer_params.h>
 

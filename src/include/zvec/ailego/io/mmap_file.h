@@ -14,8 +14,9 @@
 
 #pragma once
 
-#include "ailego/internal/platform.h"
-#include "file.h"
+#include <zvec/ailego/container/vector.h>
+#include <zvec/ailego/internal/platform.h>
+#include <zvec/ailego/io/file.h>
 
 namespace zvec {
 namespace ailego {

@@ -14,9 +14,9 @@
 #pragma once
 
 #include <map>
-#include <ailego/io/file.h>
-#include <ailego/utility/memory_helper.h>
-#include "index_format.h"
+#include <zvec/ailego/internal/platform.h>
+#include <zvec/ailego/io/file.h>
+#include <zvec/core/framework/index_format.h>
 
 namespace zvec {
 namespace core {

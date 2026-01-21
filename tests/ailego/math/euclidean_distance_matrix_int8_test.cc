@@ -18,10 +18,10 @@
 #include <thread>
 #include <vector>
 #include <ailego/container/bitmap.h>
-#include <ailego/container/vector.h>
+#include <zvec/ailego/container/vector.h>
 #include <ailego/internal/cpu_features.h>
 #include <ailego/math/distance.h>
-#include <ailego/utility/time_helper.h>
+#include <zvec/ailego/utility/time_helper.h>
 #include <gtest/gtest.h>
 
 using namespace zvec::ailego;

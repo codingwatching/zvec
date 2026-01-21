@@ -13,10 +13,10 @@
 // limitations under the License.
 #pragma once
 
-#include "ailego/container/params.h"
-#include "index_module.h"
-#include "index_storage.h"
-#include "index_unpacker.h"
+#include <zvec/ailego/container/params.h>
+#include <zvec/core/framework/index_module.h>
+#include <zvec/core/framework/index_storage.h>
+#include <zvec/core/framework/index_unpacker.h>
 
 namespace zvec {
 namespace core {

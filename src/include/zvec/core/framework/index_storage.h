@@ -11,12 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
+
 #pragma once
 
-#include <ailego/buffer/buffer_manager.h>
-#include <ailego/container/params.h>
-#include "index_error.h"
-#include "index_module.h"
+#include <zvec/ailego/buffer/buffer_manager.h>
+#include <zvec/ailego/container/params.h>
+#include <zvec/core/framework/index_error.h>
+#include <zvec/core/framework/index_module.h>
 
 namespace zvec {
 namespace core {
