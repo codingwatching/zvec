@@ -6,17 +6,23 @@
 </h1>
 
 <p align="center">
-  <a href="https://github.com/alibaba/zvec/actions" style="text-decoration:none;"><img src="https://github.com/alibaba/zvec/actions/workflows/linux_x64_docker_ci.yml/badge.svg?branch=main" alt="Linux x64 CI"/></a>
-  <a href="https://codecov.io/github/alibaba/zvec" ><img src="https://codecov.io/github/alibaba/zvec/graph/badge.svg?token=O81CT45B66"  alt="Code Coverage"/></a>
-  <a href="https://pypi.org/project/zvec/" style="text-decoration:none;"><img src="https://img.shields.io/pypi/v/zvec.svg" alt="PyPI Release"/></a>
-  <a href="https://github.com/alibaba/zvec/blob/main/LICENSE" style="text-decoration: none;"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"/></a>
+  <a href="https://github.com/alibaba/zvec/actions/workflows/linux_x64_docker_ci.yml"><img src="https://github.com/alibaba/zvec/actions/workflows/linux_x64_docker_ci.yml/badge.svg?branch=main" alt="Linux x64 CI"/></a>
+  <a href="https://github.com/alibaba/zvec/actions/workflows/mac_arm64_ci.yml"><img src="https://github.com/alibaba/zvec/actions/workflows/mac_arm64_ci.yml/badge.svg?branch=main" alt="macOS ARM64 CI"/></a>
+  <a href="https://codecov.io/github/alibaba/zvec"><img src="https://codecov.io/github/alibaba/zvec/graph/badge.svg?token=O81CT45B66" alt="Code Coverage"/></a>
+  <a href="https://pypi.org/project/zvec/"><img src="https://img.shields.io/pypi/v/zvec.svg" alt="PyPI Release"/></a>
+  <a href="https://pypi.org/project/zvec/"><img src="https://img.shields.io/pypi/pyversions/zvec.svg" alt="Python Versions"/></a>
+  <a href="https://github.com/alibaba/zvec/blob/main/LICENSE"><img src="https://img.shields.io/badge/license-Apache%202.0-blue.svg" alt="License"/></a>
 </p>
 
-# Zvec
+<p align="center">
+  <a href="https://zvec.org/en/docs/quickstart/">📚 <strong>Quick Start</strong> </a> |
+  <a href="https://zvec.org/en/">🌐 <strong>Website</strong> </a> |
+  <a href="https://zvec.org/en/docs/">📖 <strong>Documentation</strong> </a> |
+  <a href="https://zvec.org/en/docs/benchmarks/">📊 <strong>Benchmarks</strong> </a> |
+  <a href="https://discord.gg/rKddFBBu9z">💜 <strong>Discord</strong> </a>
+</p>
 
 **Zvec** is an open-source, in-process vector database — lightweight, lightning-fast, and designed to embed directly into applications. Built on **Proxima** (Alibaba's battle-tested vector search engine), it delivers production-grade, low-latency, scalable similarity search with minimal setup.
-
-[📚 Quick Start](https://zvec.org/en/docs/quickstart/) | 🌐 [Website](https://zvec.org/en/) | [📖 Documentation](https://zvec.org/en/docs/) | [📊 Benchmarks](https://zvec.org/en/docs/benchmarks/) | [💜 Discord](https://discord.gg/rKddFBBu9z)
 
 ## 💫 Features
 
