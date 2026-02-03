@@ -108,7 +108,7 @@ Stay updated and get support — scan or click:
     <td align="center" style="padding: 8px; width: 25%;">
       <div style="font-weight: 600; font-size: 14px; margin-bottom: 6px;">🎮 Discord</div>
       <a href="https://discord.gg/rKddFBBu9z" target="_blank" style="display: inline-block; width: 100px; height: 100px; background: #5865F2; border-radius: 8px; text-decoration: none; color: white; font-size: 12px; display: flex; align-items: center; justify-content: center; line-height: 1;">
-        Join Server
+        Join Us
       </a>
     </td>
     <td align="center" style="padding: 8px; width: 25%;">
