@@ -55,6 +55,8 @@ static std::string quantize_type_to_string(const QuantizeType type) {
       return "UNDEFINED";
     case QuantizeType::INT8:
       return "INT8";
+    case QuantizeType::RABITQ:
+      return "RABITQ";
     case QuantizeType::INT4:
       return "INT4";
     case QuantizeType::FP16:
@@ -375,6 +377,43 @@ Examples:
                 t[0].cast<MetricType>(), t[1].cast<int>(), t[2].cast<int>(),
                 t[3].cast<QuantizeType>());
           }));
+
+  // binding hnsw rabitq index params
+  py::class_<HNSWRabitqIndexParams, VectorIndexParams,
+             std::shared_ptr<HNSWRabitqIndexParams>>
+      hnsw_rabitq_params(m, "HnswRabitqIndexParam", R"pbdoc(
+Parameters for configuring an HNSW (Hierarchical Navigable Small World) index with RabitQ.
+HNSW is a graph-based approximate nearest neighbor search index. This class
+encapsulates its construction hyperparameters.
+Attributes:
+    metric_type (MetricType): Distance metric used for similarity computation.
+        Default is ``MetricType.IP`` (inner product).
+    m (int): Number of bi-directional links created for every new element
+        during construction. Higher values improve accuracy but increase
+        memory usage and construction time. Default is 100.
+    ef_construction (int): Size of the dynamic candidate list for nearest
+        neighbors during index construction. Larger values yield better
+        graph quality at the cost of slower build time. Default is 500.
+    quantize_type (QuantizeType): Optional quantization type for vector
+        compression (e.g., FP16, INT8). Default is `QuantizeType.UNDEFINED` to
+        disable quantization.
+Examples:
+    >>> from zvec.typing import MetricType, QuantizeType
+    >>> params = HnswRabitqIndexParam(
+    ...     metric_type=MetricType.COSINE,
+    ...     m=16,
+    ...     ef_construction=200,
+    ...     quantize_type=QuantizeType.INT8
+    ... )
+    >>> print(params)
+    {'metric_type': 'IP', 'm': 16, 'ef_construction': 200, 'quantize_type': 'INT8'}
+)pbdoc");
+  hnsw_rabitq_params.def(
+      py::init<MetricType, int, int, QuantizeType>(),
+      py::arg("metric_type") = MetricType::IP,
+      py::arg("m") = core_interface::kDefaultHnswNeighborCnt,
+      py::arg("ef_construction") = core_interface::kDefaultHnswEfConstruction,
+      py::arg("quantize_type") = QuantizeType::UNDEFINED);
 
   // FlatIndexParams
   py::class_<FlatIndexParams, VectorIndexParams,

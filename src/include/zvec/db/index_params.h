@@ -18,6 +18,8 @@
 #include <string>
 #include <zvec/core/interface/constants.h>
 #include <zvec/db/type.h>
+#include "zvec/core/framework/index_provider.h"
+#include "zvec/core/framework/index_reformer.h"
 
 namespace zvec {
 
@@ -200,9 +202,43 @@ class HnswIndexParams : public VectorIndexParams {
     return ef_construction_;
   }
 
- private:
+ protected:
   int m_;
   int ef_construction_;
+};
+
+class HNSWRabitqIndexParams : public HnswIndexParams {
+ public:
+  using OPtr = std::shared_ptr<HNSWRabitqIndexParams>;
+  using HnswIndexParams::HnswIndexParams;
+
+  void set_raw_vector_provider(
+      core::IndexProvider::Pointer raw_vector_provider) {
+    raw_vector_provider_ = std::move(raw_vector_provider);
+  }
+
+  void set_rabitq_reformer(core::IndexReformer::Pointer rabitq_reformer) {
+    rabitq_reformer_ = std::move(rabitq_reformer);
+  }
+  core::IndexReformer::Pointer rabitq_reformer() const {
+    return rabitq_reformer_;
+  }
+  core::IndexProvider::Pointer raw_vector_provider() const {
+    return raw_vector_provider_;
+  }
+
+  Ptr clone() const override {
+    auto obj = std::make_shared<HNSWRabitqIndexParams>(
+        metric_type_, m_, ef_construction_, quantize_type_);
+    obj->set_rabitq_reformer(rabitq_reformer_);
+    obj->set_raw_vector_provider(raw_vector_provider_);
+    return obj;
+  }
+
+
+ private:
+  core::IndexProvider::Pointer raw_vector_provider_;
+  core::IndexReformer::Pointer rabitq_reformer_;
 };
 
 class FlatIndexParams : public VectorIndexParams {

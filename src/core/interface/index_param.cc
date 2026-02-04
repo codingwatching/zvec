@@ -130,8 +130,8 @@ bool HNSWIndexParam::DeserializeFromJsonObject(
     return false;
   }
 
-  if (index_type != IndexType::kHNSW) {
-    LOG_ERROR("index_type is not kHNSW");
+  if (index_type != IndexType::kHNSW && index_type != IndexType::kHNSQRabitq) {
+    LOG_ERROR("index_type is not kHNSW or kHNSQRabitq");
     return false;
   }
 

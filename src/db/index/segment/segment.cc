@@ -42,6 +42,7 @@
 #include "db/common/global_resource.h"
 #include "db/common/typedef.h"
 #include "db/index/column/inverted_column/inverted_indexer.h"
+#include "db/index/column/vector_column/engine_helper.hpp"
 #include "db/index/column/vector_column/vector_column_indexer.h"
 #include "db/index/column/vector_column/vector_column_params.h"
 #include "db/index/common/index_filter.h"
@@ -53,6 +54,11 @@
 #include "db/index/storage/mmap_forward_store.h"
 #include "db/index/storage/store_helper.h"
 #include "db/index/storage/wal/wal_file.h"
+#include "zvec/ailego/container/params.h"
+#include "zvec/core/framework/index_factory.h"
+#include "zvec/core/framework/index_meta.h"
+#include "zvec/core/framework/index_provider.h"
+#include "zvec/core/framework/index_reformer.h"
 #include "column_merging_reader.h"
 #include "sql_expr_parser.h"
 
@@ -1651,6 +1657,8 @@ Status SegmentImpl::create_vector_index(
     auto original_index_params =
         std::dynamic_pointer_cast<VectorIndexParams>(field->index_params());
 
+    core::IndexProvider::Pointer raw_vector_provider;
+
     if (!(vector_index_params->metric_type() ==
               original_index_params->metric_type() &&
           vector_indexers_[column].size() == 1)) {
@@ -1679,31 +1687,104 @@ Status SegmentImpl::create_vector_index(
       block.set_max_doc_id(meta()->max_doc_id());
       block.set_doc_count(meta()->doc_count());
       new_segment_meta->add_persisted_block(block);
+      if (vector_index_params->quantize_type() == QuantizeType::RABITQ) {
+        raw_vector_provider = vector_indexer.value()->create_index_provider();
+      }
+    } else {
+      raw_vector_provider =
+          vector_indexers_[column][0]->create_index_provider();
     }
 
-    auto quant_block_id = allocate_block_id();
-    auto field_with_new_index_params = std::make_shared<FieldSchema>(*field);
-    field_with_new_index_params->set_index_params(index_params);
+    if (vector_index_params->quantize_type() != QuantizeType::RABITQ) {
+      auto quant_block_id = allocate_block_id();
+      auto field_with_new_index_params = std::make_shared<FieldSchema>(*field);
+      field_with_new_index_params->set_index_params(index_params);
 
-    std::string index_file_path = FileHelper::MakeQuantizeVectorIndexPath(
-        path_, column, segment_meta_->id(), quant_block_id);
-    auto vector_indexer = merge_vector_indexer(
-        index_file_path, column, *field_with_new_index_params, concurrency);
-    if (!vector_indexer.has_value()) {
-      return vector_indexer.error();
+      std::string index_file_path = FileHelper::MakeQuantizeVectorIndexPath(
+          path_, column, segment_meta_->id(), quant_block_id);
+      auto vector_indexer = merge_vector_indexer(
+          index_file_path, column, *field_with_new_index_params, concurrency);
+      if (!vector_indexer.has_value()) {
+        return vector_indexer.error();
+      }
+
+      quant_vector_indexers->insert({column, vector_indexer.value()});
+
+      new_segment_meta->remove_vector_persisted_block(column, true);
+      BlockMeta block;
+      block.set_id(quant_block_id);
+      block.set_type(BlockType::VECTOR_INDEX_QUANTIZE);
+      block.set_columns({column});
+      block.set_min_doc_id(meta()->min_doc_id());
+      block.set_max_doc_id(meta()->max_doc_id());
+      block.set_doc_count(meta()->doc_count());
+      new_segment_meta->add_persisted_block(block);
+    } else {
+      // rabitq
+      // train rabitq converter
+      auto converter = core::IndexFactory::CreateConverter("RabitqConverter");
+      if (!converter) {
+        return Status::NotSupported("RabitqConverter not found");
+      }
+      core::IndexMeta index_meta;
+      index_meta.set_meta(
+          ProximaEngineHelper::convert_to_engine_data_type(field->data_type())
+              .value(),
+          // use field dimension
+          field->dimension());
+      index_meta.set_metric(
+          core_interface::Index::get_metric_name(
+              ProximaEngineHelper::convert_to_engine_metric_type(
+                  vector_index_params->metric_type())
+                  .value(),
+              false),
+          0, ailego::Params{});
+      converter->init(index_meta, ailego::Params());
+      if (int ret = converter->train(raw_vector_provider); ret != 0) {
+        return Status::InternalError("Failed to train rabitq converter:", ret);
+      }
+      core::IndexReformer::Pointer reformer;
+      if (int ret = converter->to_reformer(&reformer); ret != 0) {
+        return Status::InternalError("Failed to to get rabitq reformer:", ret);
+      }
+      // HNSWRabitqIndexParams &rabitq_params =
+      //     dynamic_cast<HNSWRabitqIndexParams &>(*index_params);
+      // rabitq_params.set_rabitq_reformer(reformer);
+      // rabitq_params.set_raw_vector_provider(raw_vector_provider);
+      // TODO: fix params
+      const auto &hnsw_params =
+          std::dynamic_pointer_cast<HnswIndexParams>(vector_index_params);
+      auto rabitq_params = std::make_shared<HNSWRabitqIndexParams>(
+          hnsw_params->metric_type(), hnsw_params->m(),
+          hnsw_params->ef_construction(), hnsw_params->quantize_type());
+      rabitq_params->set_rabitq_reformer(reformer);
+      rabitq_params->set_raw_vector_provider(raw_vector_provider);
+
+      auto quant_block_id = allocate_block_id();
+      auto field_with_new_index_params = std::make_shared<FieldSchema>(*field);
+      // field_with_new_index_params->set_index_params(index_params);
+      field_with_new_index_params->set_index_params(rabitq_params);
+
+      std::string index_file_path = FileHelper::MakeQuantizeVectorIndexPath(
+          path_, column, segment_meta_->id(), quant_block_id);
+      auto vector_indexer = merge_vector_indexer(
+          index_file_path, column, *field_with_new_index_params, concurrency);
+      if (!vector_indexer.has_value()) {
+        return vector_indexer.error();
+      }
+
+      quant_vector_indexers->insert({column, vector_indexer.value()});
+
+      new_segment_meta->remove_vector_persisted_block(column, true);
+      BlockMeta block;
+      block.set_id(quant_block_id);
+      block.set_type(BlockType::VECTOR_INDEX_QUANTIZE);
+      block.set_columns({column});
+      block.set_min_doc_id(meta()->min_doc_id());
+      block.set_max_doc_id(meta()->max_doc_id());
+      block.set_doc_count(meta()->doc_count());
+      new_segment_meta->add_persisted_block(block);
     }
-
-    quant_vector_indexers->insert({column, vector_indexer.value()});
-
-    new_segment_meta->remove_vector_persisted_block(column, true);
-    BlockMeta block;
-    block.set_id(quant_block_id);
-    block.set_type(BlockType::VECTOR_INDEX_QUANTIZE);
-    block.set_columns({column});
-    block.set_min_doc_id(meta()->min_doc_id());
-    block.set_max_doc_id(meta()->max_doc_id());
-    block.set_doc_count(meta()->doc_count());
-    new_segment_meta->add_persisted_block(block);
 
     *segment_meta = new_segment_meta;
   }

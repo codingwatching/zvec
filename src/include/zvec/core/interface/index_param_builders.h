@@ -16,6 +16,9 @@
 
 #include <memory>
 #include <zvec/core/interface/index_param.h>
+#include "zvec/core/framework/index_provider.h"
+#include "zvec/core/framework/index_reformer.h"
+#include "zvec/core/interface/index.h"
 
 namespace zvec::core_interface {
 
@@ -144,6 +147,34 @@ class HNSWIndexParamBuilder
   }
 
   std::shared_ptr<HNSWIndexParam> Build() override {
+    return param;
+  }
+};
+
+class HNSWRabitqIndexParamBuilder
+    : public BaseIndexParamBuilder<HNSWRabitqIndexParamBuilder,
+                                   HNSWRabitqIndexParam> {
+ public:
+  HNSWRabitqIndexParamBuilder() = default;
+  HNSWRabitqIndexParamBuilder &WithM(int m) {
+    param->m = m;
+    return *this;
+  }
+  HNSWRabitqIndexParamBuilder &WithEFConstruction(int ef_construction) {
+    param->ef_construction = ef_construction;
+    return *this;
+  }
+  HNSWRabitqIndexParamBuilder &WithReformer(
+      core::IndexReformer::Pointer reformer) {
+    param->reformer = std::move(reformer);
+    return *this;
+  }
+  HNSWRabitqIndexParamBuilder &WithProvider(
+      core::IndexProvider::Pointer provider) {
+    param->provider = std::move(provider);
+    return *this;
+  }
+  std::shared_ptr<HNSWRabitqIndexParam> Build() override {
     return param;
   }
 };

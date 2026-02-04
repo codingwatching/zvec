@@ -23,6 +23,7 @@
 #include <zvec/core/framework/index_filter.h>
 #include <zvec/core/framework/index_meta.h>
 #include <zvec/core/interface/constants.h>
+#include "zvec/core/framework/index_framework.h"
 
 namespace zvec::core_interface {
 #define MAX_DIMENSION 65536
@@ -61,6 +62,7 @@ enum class IndexType {
   kFlat,
   kIVF,  // it's actual a two-layer index
   kHNSW,
+  kHNSQRabitq,
 };
 
 enum class IVFSearchMethod { kBF, kHNSW };
@@ -80,7 +82,8 @@ enum class QuantizerType {
   kAQ,
   kFP16,
   kInt8,
-  kInt4
+  kInt4,
+  kRabitq,
 };
 
 struct SerializableBase {
@@ -185,6 +188,8 @@ struct HNSWQueryParam : public BaseIndexQueryParam {
     return std::make_shared<HNSWQueryParam>(*this);
   }
 };
+
+struct HNSWRabitqQueryParam : public HNSWQueryParam {};
 
 struct IVFQueryParam : public BaseIndexQueryParam {
   int nprobe = 10;
@@ -314,6 +319,37 @@ struct HNSWIndexParam : public BaseIndexParam {
   bool DeserializeFromJsonObject(const ailego::JsonObject &json_obj) override;
   ailego::JsonObject SerializeToJsonObject(
       bool omit_empty_value = false) const override;
+};
+
+struct HNSWRabitqIndexParam : public HNSWIndexParam {
+  using Pointer = std::shared_ptr<HNSWRabitqIndexParam>;
+
+  // TODO: constructor
+  int total_bits = 7;
+  int num_clusters = 16;
+  core::IndexProvider::Pointer provider = nullptr;
+  core::IndexReformer::Pointer reformer = nullptr;
+
+  // Constructors with delegation
+  HNSWRabitqIndexParam() : HNSWIndexParam() {
+    index_type = IndexType::kHNSQRabitq;
+  }
+
+  HNSWRabitqIndexParam(int m, int ef_construction)
+      : HNSWIndexParam(m, ef_construction) {
+    index_type = IndexType::kHNSQRabitq;
+  }
+
+  HNSWRabitqIndexParam(MetricType metric, int dim, int m, int ef_construction)
+      : HNSWIndexParam(metric, dim, m, ef_construction) {
+    index_type = IndexType::kHNSQRabitq;
+  }
+
+ protected:
+  // TODO: implement deserialize
+  // bool DeserializeFromJsonObject(const ailego::JsonObject &json_obj)
+  // override; ailego::JsonObject SerializeToJsonObject(
+  //     bool omit_empty_value = false) const override;
 };
 
 }  // namespace zvec::core_interface
