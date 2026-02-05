@@ -216,87 +216,9 @@ int RabitqReformer::convert(const void *record, const IndexQueryMeta &rmeta,
   return 0;
 }
 
-int RabitqReformer::transform(const void *query, const IndexQueryMeta &qmeta,
-                              std::string *out, IndexQueryMeta *ometa) const {
-  if (!loaded_) {
-    LOG_ERROR("Centroids not loaded yet");
-    return IndexError_NoReady;
-  }
-
-  if (!query || !out) {
-    LOG_ERROR("Invalid arguments for transform");
-    return IndexError_InvalidArgument;
-  }
-
-  // Validate input
-  if (qmeta.dimension() != dimension_ ||
-      qmeta.data_type() != IndexMeta::DataType::DT_FP32) {
-    LOG_ERROR("Invalid query meta: dimension=%zu, data_type=%d",
-              static_cast<size_t>(qmeta.dimension()), (int)qmeta.data_type());
-    return IndexError_InvalidArgument;
-  }
-
-  const float *query_vector = static_cast<const float *>(query);
-
-  // Apply rotator if needed
-  std::vector<float> rotated_query(padded_dim_, 0.0f);
-  rotator_->rotate(query_vector, rotated_query.data());
-
-  // Quantize query to 4-bit representation
-  // TODO: add IP support
-
-  rabitqlib::SplitSingleQuery<float> query_wrapper(
-      rotated_query.data(), padded_dim_, ex_bits_, query_config_, metric_type_);
-
-  // Preprocess - get the distance from query to all centroids
-  std::vector<float> q_to_centroids(num_clusters_, 0.0);
-
-  if (metric_type_ == rabitqlib::METRIC_L2) {
-    // TODO:
-    // for (size_t i = 0; i < num_cluster_; i++) {
-    //   q_to_centroids[i] = std::sqrt(raw_dist_func_(
-    //       rotated_query,
-    //       reinterpret_cast<float *>(centroids_memory_) + (i * padded_dim_),
-    //       padded_dim_));
-    // }
-  } else if (metric_type_ == rabitqlib::METRIC_IP) {
-    q_to_centroids.resize(2 * num_clusters_, 0.0);
-    // TODO:
-    // // first half as g_add, second half as g_error
-    // for (size_t i = 0; i < num_cluster_; i++) {
-    //   q_to_centroids[i] = dot_product(
-    //       rotated_query,
-    //       reinterpret_cast<float *>(centroids_memory_) + (i * padded_dim_),
-    //       padded_dim_);
-    //   q_to_centroids[i + num_cluster_] = std::sqrt(euclidean_sqr(
-    //       rotated_query,
-    //       reinterpret_cast<float *>(centroids_memory_) + (i * padded_dim_),
-    //       padded_dim_));
-    // }
-  }
-
-  // Serialize transformed query data:
-  // quantized_query + centroid_distances
-  out->clear();
-
-  // Append rotated query
-  size_t total_bytes = 0;
-  out->append(reinterpret_cast<const char *>(rotated_query.data()),
-              rotated_query.size() * sizeof(float));
-  total_bytes += rotated_query.size() * sizeof(float);
-  // Append centroid distances
-  out->append(reinterpret_cast<const char *>(q_to_centroids.data()),
-              q_to_centroids.size() * sizeof(float));
-  total_bytes += q_to_centroids.size() * sizeof(float);
-  // Append quantized query
-  size_t quantized_bytes = query_wrapper.append(out);
-  total_bytes += quantized_bytes;
-
-  ometa->set_meta(IndexMeta::DataType::DT_INT8, (uint32_t)total_bytes);
-  LOG_INFO("Transformed query. total_bytes=%zu, quantized_bytes=%zu",
-           total_bytes, quantized_bytes);
-
-  return 0;
+int RabitqReformer::transform(const void *, const IndexQueryMeta &,
+                              std::string *, IndexQueryMeta *) const {
+  return IndexError_NotImplemented;
 }
 
 int RabitqReformer::transform_to_entity(const void *query,
