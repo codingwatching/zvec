@@ -85,6 +85,7 @@ class RabitqConverter : public IndexConverter {
   IndexMeta meta_;
   IndexHolder::Pointer result_holder_;
   Stats stats_;
+  size_t sample_count_{0};
 
   // RaBitQ parameters
   size_t num_clusters_{0};

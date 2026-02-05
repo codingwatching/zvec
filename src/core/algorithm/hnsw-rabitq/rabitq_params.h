@@ -34,6 +34,8 @@ static const std::string PARAM_RABITQ_REFORMER_METRIC_NAME(
     "proxima.rabitq.reformer.metric_name");
 static const std::string PARAM_RABITQ_ROTATOR_TYPE(
     "proxima.rabitq.rotator.type");
+static const std::string PARAM_RABITQ_CONVERTER_SAMPLE_COUNT(
+    "proxima.rabitq.converter.sample_count");
 
 // Default values
 static constexpr size_t kDefaultNumClusters = 16;

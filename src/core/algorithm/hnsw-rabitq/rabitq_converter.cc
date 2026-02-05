@@ -90,6 +90,7 @@ int RabitqConverter::init(const IndexMeta &meta, const ailego::Params &params) {
     LOG_ERROR("RaBitQ only supports FP32 data type");
     return IndexError_Unsupported;
   }
+  params.get(PARAM_RABITQ_CONVERTER_SAMPLE_COUNT, &sample_count_);
 
   std::string rotator_type_str;
   params.get(PARAM_RABITQ_ROTATOR_TYPE, &rotator_type_str);
@@ -110,9 +111,9 @@ int RabitqConverter::init(const IndexMeta &meta, const ailego::Params &params) {
 
   LOG_INFO(
       "RabitqConverter initialized: dim=%zu, padded_dim=%zu, "
-      "num_clusters=%zu, ex_bits=%zu, rotator_type=%d[%s]",
+      "num_clusters=%zu, ex_bits=%zu, rotator_type=%d[%s] sample_count[%zu]",
       dimension_, padded_dim_, num_clusters_, ex_bits_, (int)rotator_type_,
-      rotator_type_str.c_str());
+      rotator_type_str.c_str(), sample_count_);
 
   return 0;
 }
@@ -139,13 +140,15 @@ int RabitqConverter::train(IndexHolder::Pointer holder) {
     return IndexError_InvalidArgument;
   }
 
-  LOG_INFO("Training with %zu vectors from holder", vector_count);
-
   // do sampling from all data
-  // TODO: set sample_count_
-  auto sample_count_ = vector_count;
+  size_t sample_count = vector_count;
+  if (sample_count_ > 0) {
+    sample_count = std::min(sample_count_, vector_count);
+  }
+  LOG_INFO("Training with %zu vectors from %zu of holder", sample_count,
+           vector_count);
   auto sampler = std::make_shared<SampleIndexFeatures<CompactIndexFeatures>>(
-      meta_, sample_count_);
+      meta_, sample_count);
   auto iter = holder->create_iterator();
   if (!iter) {
     LOG_ERROR("Create iterator error");
