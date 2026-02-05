@@ -18,103 +18,103 @@
 namespace zvec {
 namespace core {
 
-static const std::string PARAM_HNSW_RABITQ_GENERAL_DIMENSION(
+inline const std::string PARAM_HNSW_RABITQ_GENERAL_DIMENSION(
     "proxima.hnsw_rabitq.general.dimension");
 
-static const std::string PARAM_HNSW_RABITQ_BUILDER_THREAD_COUNT(
+inline const std::string PARAM_HNSW_RABITQ_BUILDER_THREAD_COUNT(
     "proxima.hnsw_rabitq.builder.thread_count");
-static const std::string PARAM_HNSW_RABITQ_BUILDER_MEMORY_QUOTA(
+inline const std::string PARAM_HNSW_RABITQ_BUILDER_MEMORY_QUOTA(
     "proxima.hnsw_rabitq.builder.memory_quota");
-static const std::string PARAM_HNSW_RABITQ_BUILDER_EFCONSTRUCTION(
+inline const std::string PARAM_HNSW_RABITQ_BUILDER_EFCONSTRUCTION(
     "proxima.hnsw_rabitq.builder.efconstruction");
-static const std::string PARAM_HNSW_RABITQ_BUILDER_SCALING_FACTOR(
+inline const std::string PARAM_HNSW_RABITQ_BUILDER_SCALING_FACTOR(
     "proxima.hnsw_rabitq.builder.scaling_factor");
-static const std::string PARAM_HNSW_RABITQ_BUILDER_CHECK_INTERVAL_SECS(
+inline const std::string PARAM_HNSW_RABITQ_BUILDER_CHECK_INTERVAL_SECS(
     "proxima.hnsw_rabitq.builder.check_interval_secs");
-static const std::string PARAM_HNSW_RABITQ_BUILDER_NEIGHBOR_PRUNE_MULTIPLIER(
+inline const std::string PARAM_HNSW_RABITQ_BUILDER_NEIGHBOR_PRUNE_MULTIPLIER(
     "proxima.hnsw_rabitq.builder.neighbor_prune_multiplier");
-static const std::string PARAM_HNSW_RABITQ_BUILDER_MIN_NEIGHBOR_COUNT(
+inline const std::string PARAM_HNSW_RABITQ_BUILDER_MIN_NEIGHBOR_COUNT(
     "proxima.hnsw_rabitq.builder.min_neighbor_count");
-static const std::string PARAM_HNSW_RABITQ_BUILDER_MAX_NEIGHBOR_COUNT(
+inline const std::string PARAM_HNSW_RABITQ_BUILDER_MAX_NEIGHBOR_COUNT(
     "proxima.hnsw_rabitq.builder.max_neighbor_count");
-static const std::string
+inline const std::string
     PARAM_HNSW_RABITQ_BUILDER_L0_MAX_NEIGHBOR_COUNT_MULTIPLIER(
         "proxima.hnsw_rabitq.builder.l0_max_neighbor_count_multiplier");
 
-static const std::string PARAM_HNSW_RABITQ_SEARCHER_EF(
+inline const std::string PARAM_HNSW_RABITQ_SEARCHER_EF(
     "proxima.hnsw_rabitq.searcher.ef");
-static const std::string PARAM_HNSW_RABITQ_SEARCHER_BRUTE_FORCE_THRESHOLD(
+inline const std::string PARAM_HNSW_RABITQ_SEARCHER_BRUTE_FORCE_THRESHOLD(
     "proxima.hnsw_rabitq.searcher.brute_force_threshold");
-static const std::string PARAM_HNSW_RABITQ_SEARCHER_NEIGHBORS_IN_MEMORY_ENABLE(
+inline const std::string PARAM_HNSW_RABITQ_SEARCHER_NEIGHBORS_IN_MEMORY_ENABLE(
     "proxima.hnsw_rabitq.searcher.neighbors_in_memory_enable");
-static const std::string PARAM_HNSW_RABITQ_SEARCHER_MAX_SCAN_RATIO(
+inline const std::string PARAM_HNSW_RABITQ_SEARCHER_MAX_SCAN_RATIO(
     "proxima.hnsw_rabitq.searcher.max_scan_ratio");
-static const std::string PARAM_HNSW_RABITQ_SEARCHER_CHECK_CRC_ENABLE(
+inline const std::string PARAM_HNSW_RABITQ_SEARCHER_CHECK_CRC_ENABLE(
     "proxima.hnsw_rabitq.searcher.check_crc_enable");
-static const std::string PARAM_HNSW_RABITQ_SEARCHER_VISIT_BLOOMFILTER_ENABLE(
+inline const std::string PARAM_HNSW_RABITQ_SEARCHER_VISIT_BLOOMFILTER_ENABLE(
     "proxima.hnsw_rabitq.searcher.visit_bloomfilter_enable");
-static const std::string
+inline const std::string
     PARAM_HNSW_RABITQ_SEARCHER_VISIT_BLOOMFILTER_NEGATIVE_PROB(
         "proxima.hnsw_rabitq.searcher.visit_bloomfilter_negative_prob");
-static const std::string PARAM_HNSW_RABITQ_SEARCHER_FORCE_PADDING_RESULT_ENABLE(
+inline const std::string PARAM_HNSW_RABITQ_SEARCHER_FORCE_PADDING_RESULT_ENABLE(
     "proxima.hnsw_rabitq.searcher.force_padding_result_enable");
 
-static const std::string PARAM_HNSW_RABITQ_STREAMER_MAX_SCAN_RATIO(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_MAX_SCAN_RATIO(
     "proxima.hnsw_rabitq.streamer.max_scan_ratio");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_MIN_SCAN_LIMIT(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_MIN_SCAN_LIMIT(
     "proxima.hnsw_rabitq.streamer.min_scan_limit");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_MAX_SCAN_LIMIT(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_MAX_SCAN_LIMIT(
     "proxima.hnsw_rabitq.streamer.max_scan_limit");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_EF(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_EF(
     "proxima.hnsw_rabitq.streamer.ef");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_EFCONSTRUCTION(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_EFCONSTRUCTION(
     "proxima.hnsw_rabitq.streamer.efconstruction");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_MAX_NEIGHBOR_COUNT(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_MAX_NEIGHBOR_COUNT(
     "proxima.hnsw_rabitq.streamer.max_neighbor_count");
-static const std::string
+inline const std::string
     PARAM_HNSW_RABITQ_STREAMER_L0_MAX_NEIGHBOR_COUNT_MULTIPLIER(
         "proxima.hnsw_rabitq.streamer.l0_max_neighbor_count_multiplier");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_SCALING_FACTOR(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_SCALING_FACTOR(
     "proxima.hnsw_rabitq.streamer.scaling_factor");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_BRUTE_FORCE_THRESHOLD(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_BRUTE_FORCE_THRESHOLD(
     "proxima.hnsw_rabitq.streamer.brute_force_threshold");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_DOCS_HARD_LIMIT(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_DOCS_HARD_LIMIT(
     "proxima.hnsw_rabitq.streamer.docs_hard_limit");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_DOCS_SOFT_LIMIT(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_DOCS_SOFT_LIMIT(
     "proxima.hnsw_rabitq.streamer.docs_soft_limit");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_MAX_INDEX_SIZE(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_MAX_INDEX_SIZE(
     "proxima.hnsw_rabitq.streamer.max_index_size");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_VISIT_BLOOMFILTER_ENABLE(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_VISIT_BLOOMFILTER_ENABLE(
     "proxima.hnsw_rabitq.streamer.visit_bloomfilter_enable");
-static const std::string
+inline const std::string
     PARAM_HNSW_RABITQ_STREAMER_VISIT_BLOOMFILTER_NEGATIVE_PROB(
         "proxima.hnsw_rabitq.streamer.visit_bloomfilter_negative_prob");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_CHECK_CRC_ENABLE(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_CHECK_CRC_ENABLE(
     "proxima.hnsw_rabitq.streamer.check_crc_enable");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_NEIGHBOR_PRUNE_MULTIPLIER(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_NEIGHBOR_PRUNE_MULTIPLIER(
     "proxima.hnsw_rabitq.streamer.neighbor_prune_multiplier");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_CHUNK_SIZE(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_CHUNK_SIZE(
     "proxima.hnsw_rabitq.streamer.chunk_size");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_FILTER_SAME_KEY(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_FILTER_SAME_KEY(
     "proxima.hnsw_rabitq.streamer.filter_same_key");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_GET_VECTOR_ENABLE(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_GET_VECTOR_ENABLE(
     "proxima.hnsw_rabitq.streamer.get_vector_enable");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_MIN_NEIGHBOR_COUNT(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_MIN_NEIGHBOR_COUNT(
     "proxima.hnsw_rabitq.streamer.min_neighbor_count");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_FORCE_PADDING_RESULT_ENABLE(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_FORCE_PADDING_RESULT_ENABLE(
     "proxima.hnsw_rabitq.streamer.force_padding_result_enable");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_ESTIMATE_DOC_COUNT(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_ESTIMATE_DOC_COUNT(
     "proxima.hnsw_rabitq.streamer.estimate_doc_count");
-static const std::string PARAM_HNSW_RABITQ_STREAMER_USE_ID_MAP(
+inline const std::string PARAM_HNSW_RABITQ_STREAMER_USE_ID_MAP(
     "proxima.hnsw_rabitq.streamer.use_id_map");
 
-static const std::string PARAM_HNSW_RABITQ_REDUCER_WORKING_PATH(
+inline const std::string PARAM_HNSW_RABITQ_REDUCER_WORKING_PATH(
     "proxima.hnsw_rabitq.reducer.working_path");
-static const std::string PARAM_HNSW_RABITQ_REDUCER_NUM_OF_ADD_THREADS(
+inline const std::string PARAM_HNSW_RABITQ_REDUCER_NUM_OF_ADD_THREADS(
     "proxima.hnsw_rabitq.reducer.num_of_add_threads");
-static const std::string PARAM_HNSW_RABITQ_REDUCER_INDEX_NAME(
+inline const std::string PARAM_HNSW_RABITQ_REDUCER_INDEX_NAME(
     "proxima.hnsw_rabitq.reducer.index_name");
-static const std::string PARAM_HNSW_RABITQ_REDUCER_EFCONSTRUCTION(
+inline const std::string PARAM_HNSW_RABITQ_REDUCER_EFCONSTRUCTION(
     "proxima.hnsw_rabitq.reducer.efconstruction");
 
 }  // namespace core

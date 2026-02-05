@@ -79,9 +79,8 @@ TEST_F(HnswRabitqBuilderTest, TestGeneral) {
   }
 
   ailego::Params params;
-  params.set("proxima.hnsw.rabitq.num_clusters", 16UL);
-  params.set("proxima.hnsw.rabitq.ex_bits", 2UL);
-  params.set("proxima.hnsw.rabitq.sample_count", 500UL);
+  params.set("proxima.rabitq.num_clusters", 16UL);
+  params.set("proxima.rabitq.total_bits", 2UL);
   params.set("proxima.hnsw_rabitq.general.dimension", dim);
 
   ASSERT_EQ(0, builder->init(*_index_meta_ptr, params));
@@ -113,7 +112,7 @@ TEST_F(HnswRabitqBuilderTest, TestLoad) {
   ASSERT_NE(searcher, nullptr);
 
   ailego::Params search_params;
-  search_params.set("proxima.hnsw.rabitq.searcher.ef", 100UL);
+  search_params.set("proxima.hnsw_rabitq.searcher.ef", 100UL);
   ASSERT_EQ(0, searcher->init(search_params));
 
   auto loader = IndexFactory::CreateStorage("FileReadStorage");
@@ -160,11 +159,10 @@ TEST_F(HnswRabitqBuilderTest, TestMemquota) {
   }
 
   ailego::Params params;
-  params.set("proxima.hnsw.rabitq.num_clusters", 16UL);
-  params.set("proxima.hnsw.rabitq.ex_bits", 2UL);
-  params.set("proxima.hnsw.rabitq.sample_count", 500UL);
+  params.set("proxima.rabitq.num_clusters", 16UL);
+  params.set("proxima.rabitq.total_bits", 2UL);
   params.set("proxima.hnsw_rabitq.general.dimension", dim);
-  params.set("proxima.hnsw.rabitq.builder.memory_quota", 100000UL);
+  params.set("proxima.hnsw_rabitq.builder.memory_quota", 100000UL);
 
   ASSERT_EQ(0, builder->init(*_index_meta_ptr, params));
   ASSERT_EQ(0, builder->train(holder));
@@ -191,9 +189,8 @@ TEST_F(HnswRabitqBuilderTest, TestIndexThreads) {
   }
 
   ailego::Params params;
-  params.set("proxima.hnsw.rabitq.num_clusters", 16UL);
-  params.set("proxima.hnsw.rabitq.ex_bits", 2UL);
-  params.set("proxima.hnsw.rabitq.sample_count", 500UL);
+  params.set("proxima.rabitq.num_clusters", 16UL);
+  params.set("proxima.rabitq.total_bits", 2UL);
   params.set("proxima.hnsw_rabitq.general.dimension", dim);
 
   std::srand(ailego::Realtime::MilliSeconds());
@@ -264,9 +261,8 @@ TEST_F(HnswRabitqBuilderTest, TestCosine) {
   converted_holder = convert_holder_to_provider(converted_holder);
 
   ailego::Params params;
-  params.set("proxima.hnsw.rabitq.num_clusters", 16UL);
-  params.set("proxima.hnsw.rabitq.ex_bits", 2UL);
-  params.set("proxima.hnsw.rabitq.sample_count", 500UL);
+  params.set("proxima.rabitq.num_clusters", 16UL);
+  params.set("proxima.rabitq.total_bits", 2UL);
   params.set("proxima.hnsw_rabitq.general.dimension", dim);
 
   ASSERT_EQ(0, builder->init(index_meta, params));
@@ -309,9 +305,8 @@ TEST_F(HnswRabitqBuilderTest, TestCleanupAndRebuild) {
   }
 
   ailego::Params params;
-  params.set("proxima.hnsw.rabitq.num_clusters", 16UL);
-  params.set("proxima.hnsw.rabitq.ex_bits", 2UL);
-  params.set("proxima.hnsw.rabitq.sample_count", 500UL);
+  params.set("proxima.rabitq.num_clusters", 16UL);
+  params.set("proxima.rabitq.total_bits", 2UL);
   params.set("proxima.hnsw_rabitq.general.dimension", dim);
 
   ASSERT_EQ(0, builder->init(*_index_meta_ptr, params));
