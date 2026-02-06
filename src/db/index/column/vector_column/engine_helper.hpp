@@ -166,7 +166,7 @@ class ProximaEngineHelper {
 
       case IndexType::HNSW_RABITQ: {
         auto hnsw_query_param_result =
-            _build_common_query_param<core_interface::HNSWQueryParam>(
+            _build_common_query_param<core_interface::HNSWRabitqQueryParam>(
                 query_params);
         if (!hnsw_query_param_result.has_value()) {
           return tl::make_unexpected(Status::InvalidArgument(

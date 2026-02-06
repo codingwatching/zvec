@@ -189,7 +189,15 @@ struct HNSWQueryParam : public BaseIndexQueryParam {
   }
 };
 
-struct HNSWRabitqQueryParam : public HNSWQueryParam {};
+struct HNSWRabitqQueryParam : public BaseIndexQueryParam {
+  using Pointer = std::shared_ptr<HNSWRabitqQueryParam>;
+
+  uint32_t ef_search = kDefaultHnswEfSearch;
+
+  BaseIndexQueryParam::Pointer Clone() const override {
+    return std::make_shared<HNSWRabitqQueryParam>(*this);
+  }
+};
 
 struct IVFQueryParam : public BaseIndexQueryParam {
   int nprobe = 10;
@@ -321,29 +329,32 @@ struct HNSWIndexParam : public BaseIndexParam {
       bool omit_empty_value = false) const override;
 };
 
-struct HNSWRabitqIndexParam : public HNSWIndexParam {
+struct HNSWRabitqIndexParam : public BaseIndexParam {
   using Pointer = std::shared_ptr<HNSWRabitqIndexParam>;
 
-  // TODO: constructor
-  int total_bits = 7;
-  int num_clusters = 16;
+  // HNSW parameters
+  int m = kDefaultHnswNeighborCnt;
+  int ef_construction = kDefaultHnswEfConstruction;
+
+  // Rabitq parameters
+  int total_bits = kDefaultRabitqTotalBits;
+  int num_clusters = kDefaultRabitqNumClusters;
+  int sample_count = 0;
   core::IndexProvider::Pointer provider = nullptr;
   core::IndexReformer::Pointer reformer = nullptr;
 
   // Constructors with delegation
-  HNSWRabitqIndexParam() : HNSWIndexParam() {
-    index_type = IndexType::kHNSQRabitq;
-  }
+  HNSWRabitqIndexParam() : BaseIndexParam(IndexType::kHNSQRabitq) {}
 
   HNSWRabitqIndexParam(int m, int ef_construction)
-      : HNSWIndexParam(m, ef_construction) {
-    index_type = IndexType::kHNSQRabitq;
-  }
+      : BaseIndexParam(IndexType::kHNSQRabitq),
+        m(m),
+        ef_construction(ef_construction) {}
 
   HNSWRabitqIndexParam(MetricType metric, int dim, int m, int ef_construction)
-      : HNSWIndexParam(metric, dim, m, ef_construction) {
-    index_type = IndexType::kHNSQRabitq;
-  }
+      : BaseIndexParam(IndexType::kHNSQRabitq, metric, dim),
+        m(m),
+        ef_construction(ef_construction) {}
 
  protected:
   // TODO: implement deserialize

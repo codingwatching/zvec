@@ -71,10 +71,10 @@ int HNSWRabitqIndex::_prepare_for_search(
     const BaseIndexQueryParam::Pointer &search_param,
     core::IndexContext::Pointer &context) {
   const auto &hnsw_search_param =
-      std::dynamic_pointer_cast<HNSWQueryParam>(search_param);
+      std::dynamic_pointer_cast<HNSWRabitqQueryParam>(search_param);
 
   if (ailego_unlikely(!hnsw_search_param)) {
-    LOG_ERROR("Invalid search param type, expected HNSWQueryParam");
+    LOG_ERROR("Invalid search param type, expected HNSWRabitqQueryParam");
     return core::IndexError_Runtime;
   }
 
