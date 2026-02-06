@@ -85,7 +85,6 @@ class Buffer1Storage : public IndexStorage {
 
     //! Read data from segment
     size_t read(size_t offset, const void **data, size_t len) override {
-      
       if (ailego_unlikely(offset + len > segment_->meta()->data_size)) {
         auto meta = segment_->meta();
         if (offset > meta->data_size) {
@@ -107,7 +106,8 @@ class Buffer1Storage : public IndexStorage {
         len = meta->data_size - offset;
       }
       size_t segment_offset = segment_->meta()->data_index + owner_->get_context_offset();
-      data.reset(owner_->get_buffer(segment_offset, capacity_, segment_id_) + offset);
+      data.reset(owner_->buffer_pool_handle_.get(), segment_id_, owner_->get_buffer(segment_offset, capacity_, segment_id_) + offset);
+      // data.reset(owner_->get_buffer(segment_offset, capacity_, segment_id_) + offset);
       if (data.data()) {
         return len;
       } else {
@@ -138,8 +138,8 @@ class Buffer1Storage : public IndexStorage {
    private:
     IndexMapping::Segment *segment_{};
     Buffer1Storage *owner_{nullptr};
-    size_t capacity_{};
     size_t segment_id_{};
+    size_t capacity_{};
   };
 
   //! Destructor
@@ -162,9 +162,9 @@ class Buffer1Storage : public IndexStorage {
   int open(const std::string &path, bool /*create*/) override {
     LOG_INFO("open buffer storage 1");
     file_name_ = path;
-    buffer_pool_ = std::make_unique<VecBufferPool>(path, 10u * 1024 * 1024 * 1024, 2490368 * 2);
+    buffer_pool_ = std::make_shared<ailego::VecBufferPool>(path, 10u * 1024 * 1024 * 1024, 2490368 * 2);
     buffer_pool_handle_ =
-        std::make_unique<VecBufferPoolHandle>(buffer_pool_->get_handle());
+        std::make_shared<ailego::VecBufferPoolHandle>(buffer_pool_->get_handle());
     int ret = ParseToMapping();
     LOG_ERROR("segment count: %lu, max_segment_size: %lu", segments_.size(), max_segment_size_);
     if(ret != 0) {
@@ -428,8 +428,8 @@ class Buffer1Storage : public IndexStorage {
   size_t max_segment_size_{0};
   std::unique_ptr<char[]> segment_buffer_{nullptr};
 
-  std::unique_ptr<VecBufferPool> buffer_pool_{nullptr};
-  std::unique_ptr<VecBufferPoolHandle> buffer_pool_handle_{nullptr};
+  ailego::VecBufferPool::Pointer buffer_pool_{nullptr};
+  ailego::VecBufferPoolHandle::Pointer buffer_pool_handle_{nullptr};
 };
 
 INDEX_FACTORY_REGISTER_STORAGE_ALIAS(BufferStorage, Buffer1Storage);
