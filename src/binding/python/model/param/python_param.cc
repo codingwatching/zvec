@@ -31,6 +31,8 @@ static std::string index_type_to_string(const IndexType type) {
       return "IVF";
     case IndexType::HNSW:
       return "HNSW";
+    case IndexType::HNSW_RABITQ:
+      return "HNSW_RABITQ";
     default:
       return "UNDEFINED";
   }
@@ -55,8 +57,6 @@ static std::string quantize_type_to_string(const QuantizeType type) {
       return "UNDEFINED";
     case QuantizeType::INT8:
       return "INT8";
-    case QuantizeType::RABITQ:
-      return "RABITQ";
     case QuantizeType::INT4:
       return "INT4";
     case QuantizeType::FP16:
@@ -379,41 +379,79 @@ Examples:
           }));
 
   // binding hnsw rabitq index params
-  py::class_<HNSWRabitqIndexParams, VectorIndexParams,
-             std::shared_ptr<HNSWRabitqIndexParams>>
+  py::class_<HnswRabitqIndexParams, VectorIndexParams,
+             std::shared_ptr<HnswRabitqIndexParams>>
       hnsw_rabitq_params(m, "HnswRabitqIndexParam", R"pbdoc(
-Parameters for configuring an HNSW (Hierarchical Navigable Small World) index with RabitQ.
-HNSW is a graph-based approximate nearest neighbor search index. This class
-encapsulates its construction hyperparameters.
+Parameters for configuring an HNSW (Hierarchical Navigable Small World) index with RabitQ quantization.
+
+HNSW is a graph-based approximate nearest neighbor search index. RabitQ is a
+quantization method that provides high compression with minimal accuracy loss.
+
 Attributes:
     metric_type (MetricType): Distance metric used for similarity computation.
         Default is ``MetricType.IP`` (inner product).
     m (int): Number of bi-directional links created for every new element
         during construction. Higher values improve accuracy but increase
-        memory usage and construction time. Default is 100.
+        memory usage and construction time. Default is 50.
     ef_construction (int): Size of the dynamic candidate list for nearest
         neighbors during index construction. Larger values yield better
         graph quality at the cost of slower build time. Default is 500.
-    quantize_type (QuantizeType): Optional quantization type for vector
-        compression (e.g., FP16, INT8). Default is `QuantizeType.UNDEFINED` to
-        disable quantization.
+
 Examples:
-    >>> from zvec.typing import MetricType, QuantizeType
+    >>> from zvec.typing import MetricType
     >>> params = HnswRabitqIndexParam(
     ...     metric_type=MetricType.COSINE,
     ...     m=16,
-    ...     ef_construction=200,
-    ...     quantize_type=QuantizeType.INT8
+    ...     ef_construction=200
     ... )
     >>> print(params)
-    {'metric_type': 'IP', 'm': 16, 'ef_construction': 200, 'quantize_type': 'INT8'}
+    {'metric_type': 'COSINE', 'm': 16, 'ef_construction': 200}
 )pbdoc");
-  hnsw_rabitq_params.def(
-      py::init<MetricType, int, int, QuantizeType>(),
-      py::arg("metric_type") = MetricType::IP,
-      py::arg("m") = core_interface::kDefaultHnswNeighborCnt,
-      py::arg("ef_construction") = core_interface::kDefaultHnswEfConstruction,
-      py::arg("quantize_type") = QuantizeType::UNDEFINED);
+  hnsw_rabitq_params
+      .def(py::init<MetricType, int, int>(),
+           py::arg("metric_type") = MetricType::IP,
+           py::arg("m") = core_interface::kDefaultHnswNeighborCnt,
+           py::arg("ef_construction") =
+               core_interface::kDefaultHnswEfConstruction)
+      .def_property_readonly("m", &HnswRabitqIndexParams::m,
+                             "int: Maximum number of neighbors per node.")
+      .def_property_readonly(
+          "ef_construction", &HnswRabitqIndexParams::ef_construction,
+          "int: Candidate list size during index construction.")
+      .def(
+          "to_dict",
+          [](const HnswRabitqIndexParams &self) -> py::dict {
+            py::dict dict;
+            dict["type"] = index_type_to_string(self.type());
+            dict["metric_type"] = metric_type_to_string(self.metric_type());
+            dict["m"] = self.m();
+            dict["ef_construction"] = self.ef_construction();
+            return dict;
+          },
+          "Convert to dictionary with all fields")
+      .def("__repr__",
+           [](const HnswRabitqIndexParams &self) -> std::string {
+             return "{"
+                    "\"type\":\"" +
+                    index_type_to_string(self.type()) +
+                    "\", \"metric_type\":\"" +
+                    metric_type_to_string(self.metric_type()) +
+                    "\", \"m\":" + std::to_string(self.m()) +
+                    ", \"ef_construction\":" +
+                    std::to_string(self.ef_construction()) + "}";
+           })
+      .def(py::pickle(
+          [](const HnswRabitqIndexParams &self) {
+            return py::make_tuple(self.metric_type(), self.m(),
+                                  self.ef_construction());
+          },
+          [](py::tuple t) {
+            if (t.size() != 3)
+              throw std::runtime_error(
+                  "Invalid state for HnswRabitqIndexParams");
+            return std::make_shared<HnswRabitqIndexParams>(
+                t[0].cast<MetricType>(), t[1].cast<int>(), t[2].cast<int>());
+          }));
 
   // FlatIndexParams
   py::class_<FlatIndexParams, VectorIndexParams,

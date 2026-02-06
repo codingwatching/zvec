@@ -46,7 +46,7 @@ class IndexParams {
 
   bool is_vector_index_type() const {
     return type_ == IndexType::FLAT || type_ == IndexType::HNSW ||
-           type_ == IndexType::IVF;
+           type_ == IndexType::HNSW_RABITQ || type_ == IndexType::IVF;
   }
 
   IndexType type() const {
@@ -207,10 +207,57 @@ class HnswIndexParams : public VectorIndexParams {
   int ef_construction_;
 };
 
-class HNSWRabitqIndexParams : public HnswIndexParams {
+class HnswRabitqIndexParams : public VectorIndexParams {
  public:
-  using OPtr = std::shared_ptr<HNSWRabitqIndexParams>;
-  using HnswIndexParams::HnswIndexParams;
+  HnswRabitqIndexParams(
+      MetricType metric_type, int m = core_interface::kDefaultHnswNeighborCnt,
+      int ef_construction = core_interface::kDefaultHnswEfConstruction)
+      : VectorIndexParams(IndexType::HNSW_RABITQ, metric_type,
+                          QuantizeType::UNDEFINED),
+        m_(m),
+        ef_construction_(ef_construction) {}
+
+  using OPtr = std::shared_ptr<HnswRabitqIndexParams>;
+
+  Ptr clone() const override {
+    auto obj = std::make_shared<HnswRabitqIndexParams>(metric_type_, m_,
+                                                       ef_construction_);
+    obj->set_rabitq_reformer(rabitq_reformer_);
+    obj->set_raw_vector_provider(raw_vector_provider_);
+    return obj;
+  }
+
+  std::string to_string() const override {
+    auto base_str = vector_index_params_to_string(
+        "HnswRabitqIndexParams", metric_type_, QuantizeType::UNDEFINED);
+    std::ostringstream oss;
+    oss << base_str << ",m:" << m_ << ",ef_construction:" << ef_construction_
+        << "}";
+    return oss.str();
+  }
+
+  bool operator==(const IndexParams &other) const override {
+    if (type() != other.type()) {
+      return false;
+    }
+    auto &other_rabitq = dynamic_cast<const HnswRabitqIndexParams &>(other);
+    return metric_type() == other_rabitq.metric_type() &&
+           m_ == other_rabitq.m_ &&
+           ef_construction_ == other_rabitq.ef_construction_;
+  }
+
+  void set_m(int m) {
+    m_ = m;
+  }
+  int m() const {
+    return m_;
+  }
+  void set_ef_construction(int ef_construction) {
+    ef_construction_ = ef_construction;
+  }
+  int ef_construction() const {
+    return ef_construction_;
+  }
 
   void set_raw_vector_provider(
       core::IndexProvider::Pointer raw_vector_provider) {
@@ -227,16 +274,9 @@ class HNSWRabitqIndexParams : public HnswIndexParams {
     return raw_vector_provider_;
   }
 
-  Ptr clone() const override {
-    auto obj = std::make_shared<HNSWRabitqIndexParams>(
-        metric_type_, m_, ef_construction_, quantize_type_);
-    obj->set_rabitq_reformer(rabitq_reformer_);
-    obj->set_raw_vector_provider(raw_vector_provider_);
-    return obj;
-  }
-
-
  private:
+  int m_;
+  int ef_construction_;
   core::IndexProvider::Pointer raw_vector_provider_;
   core::IndexReformer::Pointer rabitq_reformer_;
 };

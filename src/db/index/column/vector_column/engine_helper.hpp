@@ -164,6 +164,25 @@ class ProximaEngineHelper {
         return std::move(hnsw_query_param);
       }
 
+      case IndexType::HNSW_RABITQ: {
+        auto hnsw_query_param_result =
+            _build_common_query_param<core_interface::HNSWQueryParam>(
+                query_params);
+        if (!hnsw_query_param_result.has_value()) {
+          return tl::make_unexpected(Status::InvalidArgument(
+              "failed to build query param: " +
+              hnsw_query_param_result.error().message()));
+        }
+        auto &hnsw_query_param = hnsw_query_param_result.value();
+        if (query_params.query_params) {
+          auto db_hnsw_rabitq_query_params =
+              dynamic_cast<const HnswRabitqQueryParams *>(
+                  query_params.query_params.get());
+          hnsw_query_param->ef_search = db_hnsw_rabitq_query_params->ef();
+        }
+        return std::move(hnsw_query_param);
+      }
+
       case IndexType::IVF: {
         auto ivf_query_param_result =
             _build_common_query_param<core_interface::IVFQueryParam>(
@@ -214,8 +233,6 @@ class ProximaEngineHelper {
         return core_interface::QuantizerType::kInt8;
       case QuantizeType::INT4:
         return core_interface::QuantizerType::kInt4;
-      case QuantizeType::RABITQ:
-        return core_interface::QuantizerType::kRabitq;
       default:
         return tl::make_unexpected(
             Status::InvalidArgument("unsupported quantize type"));
@@ -293,8 +310,6 @@ class ProximaEngineHelper {
       return tl::make_unexpected(
           Status::InvalidArgument("field_schema.index_params nullptr"));
     }
-    auto db_vector_index_params = dynamic_cast<const VectorIndexParams *>(
-        field_schema.index_params().get());
 
     switch (field_schema.index_params()->type()) {
       case IndexType::FLAT: {
@@ -311,45 +326,6 @@ class ProximaEngineHelper {
       }
 
       case IndexType::HNSW: {
-        if (db_vector_index_params->quantize_type() == QuantizeType::RABITQ) {
-          // TODO: check suitable
-          auto index_param_builder_result = _build_common_index_param<
-              HNSWRabitqIndexParams,
-              core_interface::HNSWRabitqIndexParamBuilder>(field_schema);
-          if (!index_param_builder_result.has_value()) {
-            if (dynamic_cast<HNSWRabitqIndexParams *>(
-                    field_schema.index_params().get()) == nullptr) {
-              index_param_builder_result = _build_common_index_param<
-                  HnswIndexParams, core_interface::HNSWRabitqIndexParamBuilder>(
-                  field_schema);
-            }
-          }
-          if (!index_param_builder_result.has_value()) {
-            return tl::make_unexpected(Status::InvalidArgument(
-                "failed to build index param: " +
-                index_param_builder_result.error().message()));
-          }
-          auto index_param_builder = index_param_builder_result.value();
-
-          auto db_index_params = dynamic_cast<const HNSWRabitqIndexParams *>(
-              field_schema.index_params().get());
-          if (db_index_params != nullptr) {
-            index_param_builder->WithM(db_index_params->m());
-            index_param_builder->WithEFConstruction(
-                db_index_params->ef_construction());
-            index_param_builder->WithProvider(
-                db_index_params->raw_vector_provider());
-            index_param_builder->WithReformer(
-                db_index_params->rabitq_reformer());
-          } else {
-            auto *hnsw_index_params = dynamic_cast<const HnswIndexParams *>(
-                field_schema.index_params().get());
-            index_param_builder->WithM(hnsw_index_params->m());
-            index_param_builder->WithEFConstruction(
-                hnsw_index_params->ef_construction());
-          }
-          return index_param_builder->Build();
-        }
         auto index_param_builder_result =
             _build_common_index_param<HnswIndexParams,
                                       core_interface::HNSWIndexParamBuilder>(
@@ -366,6 +342,29 @@ class ProximaEngineHelper {
         index_param_builder->WithM(db_index_params->m());
         index_param_builder->WithEFConstruction(
             db_index_params->ef_construction());
+
+        return index_param_builder->Build();
+      }
+
+      case IndexType::HNSW_RABITQ: {
+        auto index_param_builder_result = _build_common_index_param<
+            HnswRabitqIndexParams, core_interface::HNSWRabitqIndexParamBuilder>(
+            field_schema);
+        if (!index_param_builder_result.has_value()) {
+          return tl::make_unexpected(Status::InvalidArgument(
+              "failed to build index param: " +
+              index_param_builder_result.error().message()));
+        }
+        auto index_param_builder = index_param_builder_result.value();
+
+        auto db_index_params = dynamic_cast<const HnswRabitqIndexParams *>(
+            field_schema.index_params().get());
+        index_param_builder->WithM(db_index_params->m());
+        index_param_builder->WithEFConstruction(
+            db_index_params->ef_construction());
+        index_param_builder->WithProvider(
+            db_index_params->raw_vector_provider());
+        index_param_builder->WithReformer(db_index_params->rabitq_reformer());
 
         return index_param_builder->Build();
       }

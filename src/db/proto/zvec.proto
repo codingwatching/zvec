@@ -56,6 +56,8 @@ enum IndexType {
   IT_IVF = 2;
   // Proxima FLAT Index
   IT_FLAT = 3;
+  // Proxima HNSW RABITQ Index
+  IT_HNSW_RABITQ = 4;
   // Invert Index
   IT_INVERT = 10;
 };
@@ -65,7 +67,6 @@ enum QuantizeType {
   QT_FP16 = 1;
   QT_INT8 = 2;
   QT_INT4 = 3;
-  QT_RABITQ = 4;
 };
 
 enum MetricType {
@@ -75,9 +76,11 @@ enum MetricType {
   MT_COSINE = 3;
 };
 
-message InvertIndexParams { bool enable_range_optimization = 1; };
+message InvertIndexParams {
+  bool enable_range_optimization = 1;
+};
 
-message BaseIndexParams { 
+message BaseIndexParams {
   MetricType metric_type = 1;
   QuantizeType quantize_type = 2;
 };
@@ -86,7 +89,13 @@ message HnswIndexParams {
   BaseIndexParams base = 1;
   int32 m = 2;
   int32 ef_construction = 3;
-};
+}
+
+message HnswRabitqIndexParams {
+  MetricType metric_type = 1;
+  int32 m = 2;
+  int32 ef_construction = 3;
+}
 
 message FlatIndexParams {
   BaseIndexParams base = 1;
@@ -105,6 +114,7 @@ message IndexParams {
     HnswIndexParams hnsw = 2;
     FlatIndexParams flat = 3;
     IVFIndexParams ivf = 4;
+    HnswRabitqIndexParams hnsw_rabitq = 5;
   };
 };
 
@@ -132,11 +142,11 @@ enum BlockType {
 
 message BlockMeta {
   uint32 block_id = 1;
-  BlockType block_type = 2; // for getting filename prefix
+  BlockType block_type = 2;  // for getting filename prefix
   uint64 min_doc_id = 3;
   uint64 max_doc_id = 4;
   uint64 doc_count = 5;
-  repeated string columns = 6; // columns contained in this block
+  repeated string columns = 6;  // columns contained in this block
 };
 
 // message AlterColumnMeta {

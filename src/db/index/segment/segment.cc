@@ -1687,7 +1687,7 @@ Status SegmentImpl::create_vector_index(
       block.set_max_doc_id(meta()->max_doc_id());
       block.set_doc_count(meta()->doc_count());
       new_segment_meta->add_persisted_block(block);
-      if (vector_index_params->quantize_type() == QuantizeType::RABITQ) {
+      if (vector_index_params->type() == IndexType::HNSW_RABITQ) {
         raw_vector_provider = vector_indexer.value()->create_index_provider();
       }
     } else {
@@ -1695,7 +1695,7 @@ Status SegmentImpl::create_vector_index(
           vector_indexers_[column][0]->create_index_provider();
     }
 
-    if (vector_index_params->quantize_type() != QuantizeType::RABITQ) {
+    if (vector_index_params->type() != IndexType::HNSW_RABITQ) {
       auto quant_block_id = allocate_block_id();
       auto field_with_new_index_params = std::make_shared<FieldSchema>(*field);
       field_with_new_index_params->set_index_params(index_params);
@@ -1747,16 +1747,11 @@ Status SegmentImpl::create_vector_index(
       if (int ret = converter->to_reformer(&reformer); ret != 0) {
         return Status::InternalError("Failed to to get rabitq reformer:", ret);
       }
-      // HNSWRabitqIndexParams &rabitq_params =
-      //     dynamic_cast<HNSWRabitqIndexParams &>(*index_params);
-      // rabitq_params.set_rabitq_reformer(reformer);
-      // rabitq_params.set_raw_vector_provider(raw_vector_provider);
-      // TODO: fix params
       const auto &hnsw_params =
           std::dynamic_pointer_cast<HnswIndexParams>(vector_index_params);
-      auto rabitq_params = std::make_shared<HNSWRabitqIndexParams>(
+      auto rabitq_params = std::make_shared<HnswRabitqIndexParams>(
           hnsw_params->metric_type(), hnsw_params->m(),
-          hnsw_params->ef_construction(), hnsw_params->quantize_type());
+          hnsw_params->ef_construction());
       rabitq_params->set_rabitq_reformer(reformer);
       rabitq_params->set_raw_vector_provider(raw_vector_provider);
 
