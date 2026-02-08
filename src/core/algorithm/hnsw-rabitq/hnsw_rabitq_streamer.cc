@@ -836,20 +836,23 @@ int HnswRabitqStreamer::search_bf_impl(
       query = static_cast<const char *>(query) + qmeta.element_size();
     }
   } else {
-    auto &filter = ctx->filter();
-    auto &topk = ctx->topk_heap();
-
     for (size_t q = 0; q < count; ++q) {
+      HnswRabitqQueryEntity entity;
+      ret = reformer_->transform_to_entity(query, &entity);
+      if (ailego_unlikely(ret != 0)) {
+        LOG_ERROR("Hnsw rabitq streamer transform failed");
+        return ret;
+      }
       ctx->reset_query(query);
-      topk.clear();
+      ctx->topk_heap().clear();
       for (node_id_t id = 0; id < entity_.doc_cnt(); ++id) {
         if (entity_.get_key(id) == kInvalidKey) {
           continue;
         }
-
-        if (!filter.is_valid() || !filter(entity_.get_key(id))) {
-          dist_t dist = ctx->dist_calculator().batch_dist(id);
-          topk.emplace(id, dist);
+        if (!ctx->filter().is_valid() || !ctx->filter()(entity_.get_key(id))) {
+          EstimateRecord dist;
+          query_alg_->get_full_est(id, dist, entity);
+          ctx->topk_heap().emplace(id, dist);
         }
       }
       ctx->topk_to_result(q);

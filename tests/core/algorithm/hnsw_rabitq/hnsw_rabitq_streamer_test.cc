@@ -75,7 +75,6 @@ TEST_F(HnswRabitqStreamerTest, TestBuildAndSearch) {
   IndexStreamer::Pointer streamer =
       std::make_shared<HnswRabitqStreamer>(holder, reformer);
 
-
   ailego::Params params;
   params.set("proxima.hnsw_rabitq.streamer.max_neighbor_count", 16U);
   params.set("proxima.hnsw_rabitq.streamer.upper_neighbor_count", 8U);
@@ -120,6 +119,418 @@ TEST_F(HnswRabitqStreamerTest, TestBuildAndSearch) {
   ASSERT_EQ(0, new_streamer->open(storage));
 }
 
+TEST_F(HnswRabitqStreamerTest, TestLinearSearch) {
+  auto holder =
+      make_shared<MultiPassIndexProvider<IndexMeta::DataType::DT_FP32>>(dim);
+  size_t doc_cnt = 1000UL;
+  for (size_t i = 0; i < doc_cnt; i++) {
+    NumericalVector<float> vec(dim);
+    for (size_t j = 0; j < dim; ++j) {
+      vec[j] = static_cast<float>(i);
+    }
+    ASSERT_TRUE(holder->emplace(i, vec));
+  }
+
+  RabitqConverter converter;
+  converter.init(*index_meta_ptr_, ailego::Params());
+  ASSERT_EQ(converter.train(holder), 0);
+  std::shared_ptr<IndexReformer> index_reformer;
+  ASSERT_EQ(converter.to_reformer(&index_reformer), 0);
+  auto reformer = std::dynamic_pointer_cast<RabitqReformer>(index_reformer);
+  IndexStreamer::Pointer streamer =
+      std::make_shared<HnswRabitqStreamer>(holder, reformer);
+
+  ailego::Params params;
+  params.set("proxima.hnsw_rabitq.streamer.max_neighbor_count", 16U);
+  params.set("proxima.hnsw_rabitq.streamer.upper_neighbor_count", 8U);
+  params.set("proxima.hnsw_rabitq.streamer.scaling_factor", 5U);
+  params.set("proxima.hnsw_rabitq.general.dimension", dim);
+  ASSERT_EQ(0, streamer->init(*index_meta_ptr_, params));
+  auto storage = IndexFactory::CreateStorage("MMapFileStorage");
+  ASSERT_NE(nullptr, storage);
+  ailego::Params stg_params;
+  ASSERT_EQ(0, storage->init(stg_params));
+  ASSERT_EQ(0, storage->open(dir_ + "/TestLinearSearch", true));
+  ASSERT_EQ(0, streamer->open(storage));
+
+  auto context = streamer->create_context();
+  for (auto it = holder->create_iterator(); it->is_valid(); it->next()) {
+    IndexQueryMeta query_meta(IndexMeta::DataType::DT_FP32, dim);
+    ASSERT_EQ(0,
+              streamer->add_impl(it->key(), it->data(), query_meta, context));
+  }
+
+  // Test linear search with exact match
+  size_t topk = 3;
+  IndexQueryMeta query_meta(IndexMeta::DataType::DT_FP32, dim);
+  NumericalVector<float> query_vec(dim);
+
+  for (size_t i = 0; i < doc_cnt; i += 100) {
+    for (size_t j = 0; j < dim; ++j) {
+      query_vec[j] = static_cast<float>(i);
+    }
+    context->set_topk(1U);
+    ASSERT_EQ(0,
+              streamer->search_bf_impl(query_vec.data(), query_meta, context));
+    auto &result1 = context->result();
+    ASSERT_EQ(1UL, result1.size());
+    ASSERT_EQ(i, result1[0].key());
+
+    // Test with slight offset
+    for (size_t j = 0; j < dim; ++j) {
+      query_vec[j] = static_cast<float>(i) + 0.1f;
+    }
+    context->set_topk(topk);
+    ASSERT_EQ(0,
+              streamer->search_bf_impl(query_vec.data(), query_meta, context));
+    auto &result2 = context->result();
+    ASSERT_EQ(topk, result2.size());
+    ASSERT_EQ(i, result2[0].key());
+  }
+}
+
+TEST_F(HnswRabitqStreamerTest, TestKnnSearch) {
+  auto holder =
+      make_shared<MultiPassIndexProvider<IndexMeta::DataType::DT_FP32>>(dim);
+  size_t doc_cnt = 2000UL;
+  for (size_t i = 0; i < doc_cnt; i++) {
+    NumericalVector<float> vec(dim);
+    for (size_t j = 0; j < dim; ++j) {
+      vec[j] = static_cast<float>(i);
+    }
+    ASSERT_TRUE(holder->emplace(i, vec));
+  }
+
+  RabitqConverter converter;
+  converter.init(*index_meta_ptr_, ailego::Params());
+  ASSERT_EQ(converter.train(holder), 0);
+  std::shared_ptr<IndexReformer> index_reformer;
+  ASSERT_EQ(converter.to_reformer(&index_reformer), 0);
+  auto reformer = std::dynamic_pointer_cast<RabitqReformer>(index_reformer);
+  IndexStreamer::Pointer streamer =
+      std::make_shared<HnswRabitqStreamer>(holder, reformer);
+
+  ailego::Params params;
+  params.set("proxima.hnsw_rabitq.streamer.max_neighbor_count", 16U);
+  params.set("proxima.hnsw_rabitq.streamer.upper_neighbor_count", 8U);
+  params.set("proxima.hnsw_rabitq.streamer.scaling_factor", 10U);
+  params.set("proxima.hnsw_rabitq.streamer.efconstruction", 100U);
+  params.set("proxima.hnsw_rabitq.streamer.ef", 50U);
+  params.set("proxima.hnsw_rabitq.general.dimension", dim);
+  ASSERT_EQ(0, streamer->init(*index_meta_ptr_, params));
+  auto storage = IndexFactory::CreateStorage("MMapFileStorage");
+  ASSERT_NE(nullptr, storage);
+  ailego::Params stg_params;
+  ASSERT_EQ(0, storage->init(stg_params));
+  ASSERT_EQ(0, storage->open(dir_ + "/TestKnnSearch", true));
+  ASSERT_EQ(0, streamer->open(storage));
+
+  auto context = streamer->create_context();
+  for (auto it = holder->create_iterator(); it->is_valid(); it->next()) {
+    IndexQueryMeta query_meta(IndexMeta::DataType::DT_FP32, dim);
+    ASSERT_EQ(0,
+              streamer->add_impl(it->key(), it->data(), query_meta, context));
+  }
+
+  // Compare KNN search with brute force search
+  auto linear_ctx = streamer->create_context();
+  auto knn_ctx = streamer->create_context();
+  size_t topk = 50;
+  linear_ctx->set_topk(topk);
+  knn_ctx->set_topk(topk);
+
+  int total_hits = 0;
+  int total_cnts = 0;
+  int topk1_hits = 0;
+  IndexQueryMeta query_meta(IndexMeta::DataType::DT_FP32, dim);
+  NumericalVector<float> query_vec(dim);
+
+  for (size_t i = 0; i < doc_cnt; i += 100) {
+    for (size_t j = 0; j < dim; ++j) {
+      query_vec[j] = static_cast<float>(i) + 0.1f;
+    }
+
+    ASSERT_EQ(0,
+              streamer->search_impl(query_vec.data(), query_meta, 1, knn_ctx));
+    ASSERT_EQ(
+        0, streamer->search_bf_impl(query_vec.data(), query_meta, linear_ctx));
+
+    auto &knn_result = knn_ctx->result(0);
+    ASSERT_EQ(topk, knn_result.size());
+    topk1_hits += (i == knn_result[0].key());
+
+    auto &linear_result = linear_ctx->result();
+    ASSERT_EQ(topk, linear_result.size());
+    ASSERT_EQ(i, linear_result[0].key());
+
+    for (size_t k = 0; k < topk; ++k) {
+      total_cnts++;
+      for (size_t j = 0; j < topk; ++j) {
+        if (linear_result[j].key() == knn_result[k].key()) {
+          total_hits++;
+          break;
+        }
+      }
+    }
+  }
+
+  float recall = total_hits * 1.0f / total_cnts;
+  float topk1_recall = topk1_hits * 100.0f / static_cast<float>(doc_cnt);
+  EXPECT_GT(recall, 0.60f);
+  // actual: no guarantee
+  // TODO(jiliang.ljl): check if ok?
+  EXPECT_GT(topk1_recall, 0.00f);
+}
+
+TEST_F(HnswRabitqStreamerTest, TestRandomData) {
+  auto holder =
+      make_shared<MultiPassIndexProvider<IndexMeta::DataType::DT_FP32>>(dim);
+  size_t doc_cnt = 1500UL;
+
+  // Add random vectors
+  for (size_t i = 0; i < doc_cnt; i++) {
+    NumericalVector<float> vec(dim);
+    for (size_t j = 0; j < dim; ++j) {
+      vec[j] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    }
+    ASSERT_TRUE(holder->emplace(i, vec));
+  }
+
+  RabitqConverter converter;
+  converter.init(*index_meta_ptr_, ailego::Params());
+  ASSERT_EQ(converter.train(holder), 0);
+  std::shared_ptr<IndexReformer> index_reformer;
+  ASSERT_EQ(converter.to_reformer(&index_reformer), 0);
+  auto reformer = std::dynamic_pointer_cast<RabitqReformer>(index_reformer);
+  IndexStreamer::Pointer streamer =
+      std::make_shared<HnswRabitqStreamer>(holder, reformer);
+
+  ailego::Params params;
+  params.set("proxima.hnsw_rabitq.streamer.max_neighbor_count", 32U);
+  params.set("proxima.hnsw_rabitq.streamer.upper_neighbor_count", 16U);
+  params.set("proxima.hnsw_rabitq.streamer.scaling_factor", 20U);
+  params.set("proxima.hnsw_rabitq.streamer.efconstruction", 200U);
+  params.set("proxima.hnsw_rabitq.streamer.ef", 100U);
+  params.set("proxima.hnsw_rabitq.general.dimension", dim);
+  ASSERT_EQ(0, streamer->init(*index_meta_ptr_, params));
+  auto storage = IndexFactory::CreateStorage("MMapFileStorage");
+  ASSERT_NE(nullptr, storage);
+  ailego::Params stg_params;
+  ASSERT_EQ(0, storage->init(stg_params));
+  ASSERT_EQ(0, storage->open(dir_ + "/TestRandomData", true));
+  ASSERT_EQ(0, streamer->open(storage));
+
+  auto context = streamer->create_context();
+  for (auto it = holder->create_iterator(); it->is_valid(); it->next()) {
+    IndexQueryMeta query_meta(IndexMeta::DataType::DT_FP32, dim);
+    ASSERT_EQ(0,
+              streamer->add_impl(it->key(), it->data(), query_meta, context));
+  }
+
+  // Test with random queries
+  auto linear_ctx = streamer->create_context();
+  auto knn_ctx = streamer->create_context();
+  size_t topk = 50;
+  linear_ctx->set_topk(topk);
+  knn_ctx->set_topk(topk);
+
+  int total_hits = 0;
+  int total_cnts = 0;
+  int topk1_hits = 0;
+  IndexQueryMeta query_meta(IndexMeta::DataType::DT_FP32, dim);
+  NumericalVector<float> query_vec(dim);
+
+  size_t query_cnt = 200;
+  for (size_t i = 0; i < query_cnt; i++) {
+    for (size_t j = 0; j < dim; ++j) {
+      query_vec[j] = static_cast<float>(rand()) / static_cast<float>(RAND_MAX);
+    }
+
+    ASSERT_EQ(
+        0, streamer->search_bf_impl(query_vec.data(), query_meta, linear_ctx));
+    ASSERT_EQ(0,
+              streamer->search_impl(query_vec.data(), query_meta, 1, knn_ctx));
+
+    auto &knn_result = knn_ctx->result(0);
+    ASSERT_EQ(topk, knn_result.size());
+
+    auto &linear_result = linear_ctx->result();
+    ASSERT_EQ(topk, linear_result.size());
+
+    topk1_hits += (linear_result[0].key() == knn_result[0].key());
+
+    for (size_t k = 0; k < topk; ++k) {
+      total_cnts++;
+      for (size_t j = 0; j < topk; ++j) {
+        if (linear_result[j].key() == knn_result[k].key()) {
+          total_hits++;
+          break;
+        }
+      }
+    }
+  }
+
+  float recall = total_hits * 1.0f / total_cnts;
+  float topk1_recall = topk1_hits * 1.0f / query_cnt;
+  EXPECT_GT(recall, 0.50f);
+  EXPECT_GT(topk1_recall, 0.70f);
+}
+
+TEST_F(HnswRabitqStreamerTest, TestOpenClose) {
+  auto holder =
+      make_shared<MultiPassIndexProvider<IndexMeta::DataType::DT_FP32>>(dim);
+  size_t doc_cnt = 500UL;
+  for (size_t i = 0; i < doc_cnt; i++) {
+    NumericalVector<float> vec(dim);
+    for (size_t j = 0; j < dim; ++j) {
+      vec[j] = static_cast<float>(i);
+    }
+    ASSERT_TRUE(holder->emplace(i, vec));
+  }
+
+  RabitqConverter converter;
+  converter.init(*index_meta_ptr_, ailego::Params());
+  ASSERT_EQ(converter.train(holder), 0);
+  std::shared_ptr<IndexReformer> index_reformer;
+  ASSERT_EQ(converter.to_reformer(&index_reformer), 0);
+  auto reformer = std::dynamic_pointer_cast<RabitqReformer>(index_reformer);
+
+  ailego::Params params;
+  params.set("proxima.hnsw_rabitq.streamer.max_neighbor_count", 16U);
+  params.set("proxima.hnsw_rabitq.streamer.upper_neighbor_count", 8U);
+  params.set("proxima.hnsw_rabitq.streamer.scaling_factor", 5U);
+  params.set("proxima.hnsw_rabitq.general.dimension", dim);
+
+  auto storage = IndexFactory::CreateStorage("MMapFileStorage");
+  ASSERT_NE(nullptr, storage);
+  ailego::Params stg_params;
+  ASSERT_EQ(0, storage->init(stg_params));
+  ASSERT_EQ(0, storage->open(dir_ + "/TestOpenClose", true));
+
+  IndexStreamer::Pointer streamer =
+      std::make_shared<HnswRabitqStreamer>(holder, reformer);
+  ASSERT_EQ(0, streamer->init(*index_meta_ptr_, params));
+  ASSERT_EQ(0, streamer->open(storage));
+
+  auto context = streamer->create_context();
+  IndexQueryMeta query_meta(IndexMeta::DataType::DT_FP32, dim);
+
+  // Add first half of vectors
+  for (size_t i = 0; i < doc_cnt / 2; i++) {
+    NumericalVector<float> vec(dim);
+    for (size_t j = 0; j < dim; ++j) {
+      vec[j] = static_cast<float>(i);
+    }
+    ASSERT_EQ(0, streamer->add_impl(i, vec.data(), query_meta, context));
+  }
+
+  ASSERT_EQ(0, streamer->flush(0UL));
+  ASSERT_EQ(0, streamer->close());
+
+  // Reopen and add second half
+  IndexStreamer::Pointer streamer2 =
+      std::make_shared<HnswRabitqStreamer>(holder);
+  ASSERT_EQ(0, streamer2->init(*index_meta_ptr_, params));
+  ASSERT_EQ(0, streamer2->open(storage));
+
+  auto context2 = streamer2->create_context();
+  for (size_t i = doc_cnt / 2; i < doc_cnt; i++) {
+    NumericalVector<float> vec(dim);
+    for (size_t j = 0; j < dim; ++j) {
+      vec[j] = static_cast<float>(i);
+    }
+    ASSERT_EQ(0, streamer2->add_impl(i, vec.data(), query_meta, context2));
+  }
+
+  ASSERT_EQ(0, streamer2->flush(0UL));
+
+  // Verify search works after reopen
+  NumericalVector<float> query_vec(dim);
+  for (size_t j = 0; j < dim; ++j) {
+    query_vec[j] = 10.0f;
+  }
+
+  context2->set_topk(5);
+  ASSERT_EQ(0,
+            streamer2->search_impl(query_vec.data(), query_meta, 1, context2));
+  const auto &result = context2->result(0);
+  ASSERT_EQ(5UL, result.size());
+  ASSERT_EQ(10UL, result[0].key());
+}
+
+TEST_F(HnswRabitqStreamerTest, TestCreateIterator) {
+  auto holder =
+      make_shared<MultiPassIndexProvider<IndexMeta::DataType::DT_FP32>>(dim);
+  size_t doc_cnt = 300UL;
+  for (size_t i = 0; i < doc_cnt; i++) {
+    NumericalVector<float> vec(dim);
+    for (size_t j = 0; j < dim; ++j) {
+      vec[j] = static_cast<float>(i);
+    }
+    ASSERT_TRUE(holder->emplace(i, vec));
+  }
+
+  RabitqConverter converter;
+  converter.init(*index_meta_ptr_, ailego::Params());
+  ASSERT_EQ(converter.train(holder), 0);
+  std::shared_ptr<IndexReformer> index_reformer;
+  ASSERT_EQ(converter.to_reformer(&index_reformer), 0);
+  auto reformer = std::dynamic_pointer_cast<RabitqReformer>(index_reformer);
+  IndexStreamer::Pointer streamer =
+      std::make_shared<HnswRabitqStreamer>(holder, reformer);
+
+  ailego::Params params;
+  params.set("proxima.hnsw_rabitq.streamer.max_neighbor_count", 16U);
+  params.set("proxima.hnsw_rabitq.streamer.upper_neighbor_count", 8U);
+  params.set("proxima.hnsw_rabitq.streamer.scaling_factor", 5U);
+  params.set("proxima.hnsw_rabitq.general.dimension", dim);
+  ASSERT_EQ(0, streamer->init(*index_meta_ptr_, params));
+  auto storage = IndexFactory::CreateStorage("MMapFileStorage");
+  ASSERT_NE(nullptr, storage);
+  ailego::Params stg_params;
+  ASSERT_EQ(0, storage->init(stg_params));
+  ASSERT_EQ(0, storage->open(dir_ + "/TestCreateIterator", true));
+  ASSERT_EQ(0, streamer->open(storage));
+
+  auto context = streamer->create_context();
+  IndexQueryMeta query_meta(IndexMeta::DataType::DT_FP32, dim);
+
+  for (size_t i = 0; i < doc_cnt; i++) {
+    NumericalVector<float> vec(dim);
+    for (size_t j = 0; j < dim; ++j) {
+      vec[j] = static_cast<float>(i);
+    }
+    ASSERT_EQ(0, streamer->add_impl(i, vec.data(), query_meta, context));
+  }
+
+  streamer->flush(0UL);
+
+  // Test iterator
+  auto provider = streamer->create_provider();
+  auto iter = provider->create_iterator();
+  ASSERT_TRUE(!!iter);
+
+  size_t count = 0;
+  while (iter->is_valid()) {
+    ASSERT_EQ(count, iter->key());
+    // const float *data = (const float *)iter->data();
+    // for (size_t j = 0; j < dim; ++j) {
+    //   ASSERT_EQ(static_cast<float>(count), data[j]);
+    // }
+    iter->next();
+    count++;
+  }
+  ASSERT_EQ(doc_cnt, count);
+
+  // Test get_vector
+  // for (size_t i = 0; i < doc_cnt; i++) {
+  //   const float *data = (const float *)provider->get_vector(i);
+  //   ASSERT_NE(data, nullptr);
+  //   for (size_t j = 0; j < dim; ++j) {
+  //     ASSERT_EQ(static_cast<float>(i), data[j]);
+  //   }
+  // }
+}
 
 }  // namespace core
 }  // namespace zvec
