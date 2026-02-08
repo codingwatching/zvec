@@ -246,13 +246,6 @@ class VecsIndexHolder : public IndexProvider {
  private:
   //! Build key to index mapping
   void build_key_index_map() {
-    if (getenv("ENABLE_KEY_TO_INDEX_MAP") == nullptr) {
-      std::cerr
-          << "ENABLE_KEY_TO_INDEX_MAP is not set, skip build_key_index_map"
-          << std::endl;
-      ;
-      return;
-    }
     key_to_index_map_.clear();
     size_t num_vecs = vecs_reader_.num_vecs();
     for (size_t i = 0; i < num_vecs; ++i) {
