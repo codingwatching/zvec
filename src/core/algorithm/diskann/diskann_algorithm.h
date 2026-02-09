@@ -57,7 +57,7 @@ class DiskAnnAlgorithm {
                               std::vector<uint8_t> &pq_centroid,
                               // std::vector<uint32_t> &pq_chunk_offsets,
                               std::vector<uint8_t> &block_compressed_data,
-                              uint64_t num_pq_chunks);
+                              size_t num_pq_chunks);
 
   int generate_pq(IndexThreads::Pointer threads,
                   const IndexMeta &meta,
@@ -71,7 +71,7 @@ class DiskAnnAlgorithm {
                            std::vector<uint8_t> &pq_full_pivot_data,
                            std::vector<uint8_t> &pq_centroid,
                            std::vector<uint32_t> &pq_chunk_offsets,
-                           uint64_t num_pq_chunks);
+                           size_t num_pq_chunks);
 
   int train_pq(IndexThreads::Pointer threads,
                const IndexMeta &meta,

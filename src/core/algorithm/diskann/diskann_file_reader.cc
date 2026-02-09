@@ -22,24 +22,34 @@
 namespace zvec {
 namespace core {
 
+#if (defined(__linux) || defined(__linux__))
 typedef struct io_event io_event_t;
 typedef struct iocb iocb_t;
-
+#endif
 
 int setup_io_ctx(IOContext &ctx) {
+#if (defined(__linux) || defined(__linux__))
   int ret = io_setup(MAX_EVENTS, &ctx);
 
   return ret;
+#else 
+  return 0;
+#endif
 }
 
 int destroy_io_ctx(IOContext &ctx) {
+#if (defined(__linux) || defined(__linux__))
   int ret = io_destroy(ctx);
 
   return ret;
+#else 
+  return 0;
+#endif
 }
 
-int execute_io(io_context_t ctx, int fd, std::vector<AlignedRead> &read_reqs,
+int execute_io(IOContext ctx, int fd, std::vector<AlignedRead> &read_reqs,
                uint64_t n_retries = 0) {
+#if (defined(__linux) || defined(__linux__))
   uint64_t iters =
       DiskAnnUtil::round_up(read_reqs.size(), MAX_EVENTS) / MAX_EVENTS;
 
@@ -86,6 +96,7 @@ int execute_io(io_context_t ctx, int fd, std::vector<AlignedRead> &read_reqs,
     }
   }
 
+#endif
   return 0;
 }
 
@@ -112,7 +123,7 @@ LinuxAlignedFileReader::~LinuxAlignedFileReader() {
   }
 }
 
-io_context_t &LinuxAlignedFileReader::get_ctx() {
+IOContext &LinuxAlignedFileReader::get_ctx() {
   std::unique_lock<std::mutex> lk(ctx_mut);
   if (ctx_map.find(std::this_thread::get_id()) == ctx_map.end()) {
     std::cerr << "bad thread access; returning -1 as io_context_t" << std::endl;
@@ -123,6 +134,7 @@ io_context_t &LinuxAlignedFileReader::get_ctx() {
 }
 
 void LinuxAlignedFileReader::register_thread() {
+#if (defined(__linux) || defined(__linux__))
   auto thread_id = std::this_thread::get_id();
   std::unique_lock<std::mutex> lk(ctx_mut);
   if (ctx_map.find(thread_id) != ctx_map.end()) {
@@ -131,7 +143,7 @@ void LinuxAlignedFileReader::register_thread() {
     return;
   }
 
-  io_context_t ctx = 0;
+  IOContext ctx = 0;
 
   int ret = io_setup(MAX_EVENTS, &ctx);
   if (ret != 0) {
@@ -151,15 +163,17 @@ void LinuxAlignedFileReader::register_thread() {
   }
 
   lk.unlock();
+#endif
 }
 
 void LinuxAlignedFileReader::deregister_thread() {
+#if (defined(__linux) || defined(__linux__))
   auto thread_id = std::this_thread::get_id();
   std::unique_lock<std::mutex> lk(ctx_mut);
   assert(ctx_map.find(thread_id) != ctx_map.end());
 
   lk.unlock();
-  io_context_t ctx = this->get_ctx();
+  IOContext ctx = this->get_ctx();
   io_destroy(ctx);
   //  assert(ret == 0);
   lk.lock();
@@ -168,18 +182,22 @@ void LinuxAlignedFileReader::deregister_thread() {
   LOG_INFO("returned ctx from thread");
 
   lk.unlock();
+#endif
 }
 
 void LinuxAlignedFileReader::deregister_all_threads() {
+#if (defined(__linux) || defined(__linux__))
   std::unique_lock<std::mutex> lk(ctx_mut);
   for (auto x = ctx_map.begin(); x != ctx_map.end(); x++) {
-    io_context_t ctx = x->second;
+    IOContext ctx = x->second;
     io_destroy(ctx);
   }
   ctx_map.clear();
+#endif
 }
 
 void LinuxAlignedFileReader::open(const std::string &fname) {
+#if (defined(__linux) || defined(__linux__))
   int flags = O_DIRECT | O_RDONLY | O_LARGEFILE;
   this->file_desc = ::open(fname.c_str(), flags);
 
@@ -187,6 +205,7 @@ void LinuxAlignedFileReader::open(const std::string &fname) {
   ailego_assert(this->file_desc != -1);
 
   LOG_INFO("Opened file : %s", fname.c_str());
+#endif
 }
 
 void LinuxAlignedFileReader::close() {
@@ -195,7 +214,7 @@ void LinuxAlignedFileReader::close() {
 }
 
 int LinuxAlignedFileReader::read(std::vector<AlignedRead> &read_reqs,
-                                 io_context_t &ctx, bool async) {
+                                 IOContext &ctx, bool async) {
   if (async == true) {
     LOG_WARN("Async currently not supported");
   }
@@ -206,6 +225,7 @@ int LinuxAlignedFileReader::read(std::vector<AlignedRead> &read_reqs,
 
   return ret;
 }
+
 
 }  // namespace core
 }  // namespace zvec

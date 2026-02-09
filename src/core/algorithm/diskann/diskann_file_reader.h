@@ -16,7 +16,11 @@
 #define MAX_IO_DEPTH 128
 
 #include <fcntl.h>
+
+#if (defined(__linux) || defined(__linux__))
 #include <libaio.h>
+#endif
+
 #include <unistd.h>
 #include <atomic>
 #include <vector>
@@ -26,7 +30,11 @@
 namespace zvec {
 namespace core {
 
+#if (defined(__linux) || defined(__linux__))
 typedef io_context_t IOContext;
+#else
+typedef uint32_t IOContext;
+#endif
 
 int setup_io_ctx(IOContext &ctx);
 int destroy_io_ctx(IOContext &ctx);
@@ -71,7 +79,8 @@ class LinuxAlignedFileReader : public AlignedFileReader {
  private:
   uint64_t file_sz;
   int file_desc;
-  io_context_t bad_ctx = (io_context_t)-1;
+  
+  IOContext bad_ctx = (IOContext)-1;
 
  public:
   LinuxAlignedFileReader();
