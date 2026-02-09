@@ -76,12 +76,12 @@ class DistCalculator {
     return dist(vec, query_);
   }
 
-  inline dist_t dist(uint64_t id) {
+  inline dist_t dist(diskann_id_t id) {
     compare_cnt_++;
 
     const void *vec = entity_->get_vector(id);
     if (ailego_unlikely(vec == nullptr)) {
-      LOG_ERROR("Get nullptr vector, id=%lu", id);
+      LOG_ERROR("Get nullptr vector, id=%u", id);
       error_ = true;
       return 0.0f;
     }
@@ -89,19 +89,19 @@ class DistCalculator {
     return dist(vec, query_);
   }
 
-  inline dist_t dist(uint64_t lhs, uint64_t rhs) {
+  inline dist_t dist(diskann_id_t lhs, diskann_id_t rhs) {
     compare_cnt_++;
 
     const void *vec_lhs = entity_->get_vector(lhs);
     if (ailego_unlikely(vec_lhs == nullptr)) {
-      LOG_ERROR("Get nullptr vector, lhs id=%lu", lhs);
+      LOG_ERROR("Get nullptr vector, lhs id=%u", lhs);
       error_ = true;
       return 0.0f;
     }
 
     const void *vec_rhs = entity_->get_vector(rhs);
     if (ailego_unlikely(vec_rhs == nullptr)) {
-      LOG_ERROR("Get nullptr vector, rhs id=%lu", rhs);
+      LOG_ERROR("Get nullptr vector, rhs id=%u", rhs);
       error_ = true;
       return 0.0f;
     }

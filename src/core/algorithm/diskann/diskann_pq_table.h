@@ -94,15 +94,15 @@ class PQTable {
     }
   }
 
-  void aggregate_coords(const uint32_t id_num, const diskann_id_t *ids,
-                        const uint8_t *all_coords, const uint64_t dim,
+  void aggregate_coords(uint32_t id_num, const diskann_id_t *ids,
+                        const uint8_t *all_coords, size_t dim,
                         uint8_t *out);
 
-  void pq_dist_lookup(const uint8_t *pq_ids, const size_t n_pts,
-                      const size_t pq_nchunks, const float *pq_dist_buffer,
+  void pq_dist_lookup(const uint8_t *pq_ids, size_t id_num,
+                      size_t pq_nchunks, const float *pq_dist_buffer,
                       float *dists);
 
-  void compute_dists(const uint32_t id_num, const diskann_id_t *ids,
+  void compute_dists(uint32_t id_num, const diskann_id_t *ids,
                      uint32_t chunk_num, float *pq_dist_buffer,
                      void *coord_buffer, float *dists) {
     uint8_t *coord_buffer_ptr = reinterpret_cast<uint8_t *>(coord_buffer);

@@ -83,22 +83,22 @@ void PQTable::aggregate_coords(uint32_t id_num, const diskann_id_t *ids,
   }
 }
 
-void PQTable::pq_dist_lookup(const uint8_t *pq_ids, const size_t n_pts,
-                             const size_t pq_nchunks,
+void PQTable::pq_dist_lookup(const uint8_t *pq_ids, size_t id_num,
+                             size_t pq_nchunks,
                              const float *pq_dist_buffer, float *dists_out) {
-  _mm_prefetch((char *)dists_out, _MM_HINT_T0);
-  _mm_prefetch((char *)pq_ids, _MM_HINT_T0);
-  _mm_prefetch((char *)(pq_ids + 64), _MM_HINT_T0);
-  _mm_prefetch((char *)(pq_ids + 128), _MM_HINT_T0);
+  ailego_prefetch(dists_out);
+  ailego_prefetch(pq_ids);
+  ailego_prefetch(pq_ids + 64);
+  ailego_prefetch(pq_ids + 128);
 
-  memset(dists_out, 0, n_pts * sizeof(float));
+  memset(dists_out, 0, id_num * sizeof(float));
 
   for (size_t chunk = 0; chunk < pq_nchunks; chunk++) {
     const float *chunk_dists = pq_dist_buffer + kPQCentroidNum * chunk;
     if (chunk < pq_nchunks - 1) {
-      _mm_prefetch((char *)(chunk_dists + kPQCentroidNum), _MM_HINT_T0);
+      ailego_prefetch(chunk_dists + kPQCentroidNum);
     }
-    for (size_t idx = 0; idx < n_pts; idx++) {
+    for (size_t idx = 0; idx < id_num; idx++) {
       uint8_t pq_centerid = pq_ids[pq_nchunks * idx + chunk];
       dists_out[idx] += chunk_dists[pq_centerid];
     }

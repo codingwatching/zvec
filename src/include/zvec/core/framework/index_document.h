@@ -121,7 +121,6 @@ class IndexDocument {
       : key_(k),
         score_(v),
         index_(i),
-        vector_string_(std::move(vector_string_)),
         vec_mem_block_(vec_block),
         sparse_doc_(std::move(sparse_doc)) {
     has_vec_mem_block_ = true;
