@@ -93,9 +93,12 @@ message HnswIndexParams {
 }
 
 message HnswRabitqIndexParams {
-  MetricType metric_type = 1;
+  BaseIndexParams base = 1;
   int32 m = 2;
   int32 ef_construction = 3;
+  int32 total_bits = 4;
+  int32 num_clusters = 5;
+  int32 sample_count = 6;
 }
 
 message FlatIndexParams {
