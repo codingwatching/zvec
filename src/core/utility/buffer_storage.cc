@@ -32,22 +32,25 @@ class BufferStorage : public IndexStorage {
  public:
   /*! Index Storage Segment
    */
-  class Segment : public IndexStorage::Segment,
-                  public std::enable_shared_from_this<Segment> {
+  class WrappedSegment : public IndexStorage::Segment,
+                         public std::enable_shared_from_this<Segment> {
    public:
     //! Index Storage Pointer
     typedef std::shared_ptr<Segment> Pointer;
 
     //! Constructor
-    Segment(BufferStorage *owner, IndexMapping::Segment *segment, size_t segment_id)
+    WrappedSegment(BufferStorage *owner, IndexMapping::Segment *segment,
+                   uint64_t segment_header_start_offset,
+                   IndexFormat::MetaHeader *segment_header, size_t segment_id)
         : segment_(segment),
           owner_(owner),
           segment_id_(segment_id),
           capacity_(static_cast<size_t>(segment->meta()->data_size +
-                                        segment->meta()->padding_size)) {}
-
+                                        segment->meta()->padding_size)),
+          segment_header_start_offset_(segment_header_start_offset),
+          segment_header_(segment_header) {}
     //! Destructor
-    virtual ~Segment(void) {}
+    virtual ~WrappedSegment(void) {}
 
     //! Retrieve size of data
     size_t data_size(void) const override {
@@ -92,8 +95,10 @@ class BufferStorage : public IndexStorage {
         }
         len = meta->data_size - offset;
       }
-      size_t segment_offset = segment_->meta()->data_index + owner_->get_context_offset();
-      *data = owner_->get_buffer(segment_offset, capacity_, segment_id_) + offset;
+      size_t buffer_offset = segment_header_start_offset_ +
+                             segment_header_->content_offset +
+                             segment_->meta()->data_index + offset;
+      *data = owner_->get_buffer(buffer_offset, capacity_, segment_id_) + offset;
       return len;
     }
 
@@ -105,9 +110,11 @@ class BufferStorage : public IndexStorage {
         }
         len = meta->data_size - offset;
       }
-      size_t segment_offset = segment_->meta()->data_index + owner_->get_context_offset();
-      data.reset(owner_->buffer_pool_handle_.get(), segment_id_, owner_->get_buffer(segment_offset, capacity_, segment_id_) + offset);
-      // data.reset(owner_->get_buffer(segment_offset, capacity_, segment_id_) + offset);
+      size_t buffer_offset = segment_header_start_offset_ +
+                             segment_header_->content_offset +
+                             segment_->meta()->data_index + offset;
+      data.reset(owner_->buffer_pool_handle_.get(), segment_id_, owner_->get_buffer(buffer_offset, capacity_, segment_id_) + offset);
+      // data.reset(owner_->get_buffer(buffer_offset, capacity_, segment_id_) + offset);
       if (data.data()) {
         return len;
       } else {
@@ -135,11 +142,16 @@ class BufferStorage : public IndexStorage {
       return shared_from_this();
     }
 
-   private:
+   protected:
+    friend BufferStorage;
     IndexMapping::Segment *segment_{};
+
+   private:
     BufferStorage *owner_{nullptr};
     size_t segment_id_{};
     size_t capacity_{};
+    uint64_t segment_header_start_offset_;
+    IndexFormat::MetaHeader *segment_header_;
   };
 
   //! Destructor
@@ -257,7 +269,8 @@ class BufferStorage : public IndexStorage {
       segments_.emplace(
           std::string(reinterpret_cast<const char *>(segment_start) +
                       iter->segment_id_offset),
-          iter);
+          IndexMapping::SegmentInfo{IndexMapping::Segment{iter},
+                                    current_header_start_offset_, &header_});
       max_segment_size_ = std::max(max_segment_size_, iter->data_size + iter->padding_size);
       if (sizeof(IndexFormat::SegmentMeta) * footer_.segment_count >
           footer_.segments_meta_size) {
@@ -268,24 +281,58 @@ class BufferStorage : public IndexStorage {
   }
 
   int ParseToMapping() {
-    ParseHeader(0);
-    // Unpack footer
-    if (header_.meta_footer_size != sizeof(IndexFormat::MetaFooter)) {
-      return IndexError_InvalidLength;
-    }
-    if ((int32_t)header_.meta_footer_offset < 0) {
-      return IndexError_Unsupported;
-    }
-    size_t footer_offset = header_.meta_footer_offset;
-    ParseFooter(footer_offset);
+    while (true) {
+      int ret;
+      ret = ParseHeader(current_header_start_offset_);
+      if (ret != 0) {
+        LOG_ERROR("Failed to parse header, errno %d, %s", ret,
+                  IndexError::What(ret));
+        return ret;
+      }
 
-    // Unpack segment table
-    if (sizeof(IndexFormat::SegmentMeta) * footer_.segment_count >
-        footer_.segments_meta_size) {
-      return IndexError_InvalidLength;
+      switch (header_.version) {
+        case IndexFormat::FORMAT_VERSION:
+          break;
+        default:
+          LOG_ERROR("Unsupported index version: %u", header_.version);
+          return IndexError_Unsupported;
+      }
+
+      // Unpack footer
+      if (header_.meta_footer_size != sizeof(IndexFormat::MetaFooter)) {
+        return IndexError_InvalidLength;
+      }
+      if ((int32_t)header_.meta_footer_offset < 0) {
+        return IndexError_Unsupported;
+      }
+      uint64_t footer_offset =
+          header_.meta_footer_offset + current_header_start_offset_;
+      ret = ParseFooter(footer_offset);
+      if (ret != 0) {
+        LOG_ERROR("Failed to parse footer, errno %d, %s", ret,
+                  IndexError::What(ret));
+        return ret;
+      }
+
+      // Unpack segment table
+      if (sizeof(IndexFormat::SegmentMeta) * footer_.segment_count >
+          footer_.segments_meta_size) {
+        return IndexError_InvalidLength;
+      }
+      const uint64_t segment_start_offset =
+          footer_offset - footer_.segments_meta_size;
+      ret = ParseSegment(segment_start_offset);
+      if (ret != 0) {
+        LOG_ERROR("Failed to parse segment, errno %d, %s", ret,
+                  IndexError::What(ret));
+        return ret;
+      }
+
+      if (footer_.next_meta_header_offset == 0) {
+        break;
+      }
+      current_header_start_offset_ = footer_.next_meta_header_offset;
     }
-    const size_t segment_start_offset = footer_offset - footer_.segments_meta_size;
-    ParseSegment(segment_start_offset);
     return 0;
   }
 
@@ -317,12 +364,13 @@ class BufferStorage : public IndexStorage {
 
   //! Retrieve a segment by id
   IndexStorage::Segment::Pointer get(const std::string &id, int) override {
-    IndexMapping::Segment *segment = this->get_segment(id);
-    if (!segment) {
-      return BufferStorage::Segment::Pointer();
+    auto segment_info = this->get_segment_info(id);
+    if (!segment_info) {
+      return WrappedSegment::Pointer{};
     }
-    return std::make_shared<BufferStorage::Segment>(this, segment,
-                                                     id_hash_[id]);
+    return std::make_shared<WrappedSegment>(
+        this, &segment_info->segment, segment_info->segment_header_start_offset,
+        segment_info->segment_header, id_hash_[id]);
   }
 
   //! Test if it a segment exists
@@ -335,10 +383,6 @@ class BufferStorage : public IndexStorage {
     return header_.magic;
   }
 
-  uint32_t get_context_offset() {
-    return header_.content_offset;
-  }
-
  protected:
   //! Initialize index version segment
   int init_version_segment(void) {
@@ -349,7 +393,7 @@ class BufferStorage : public IndexStorage {
       return error_code;
     }
 
-    IndexMapping::Segment *segment = get_segment(INDEX_VERSION_SEGMENT_NAME);
+    auto segment = &get_segment_info(INDEX_VERSION_SEGMENT_NAME)->segment;
     if (!segment) {
       return IndexError_MMapFile;
     }
@@ -411,14 +455,13 @@ class BufferStorage : public IndexStorage {
   }
 
   //! Get a segment from storage
-  IndexMapping::Segment *get_segment(const std::string &id) {
+  IndexMapping::SegmentInfo *get_segment_info(const std::string &id) {
     std::lock_guard<std::mutex> latch(mapping_mutex_);
     auto iter = segments_.find(id);
     if (iter == segments_.end()) {
       return nullptr;
     }
-    IndexMapping::Segment *item = &iter->second;
-    return item;
+    return &iter->second;
   }
 
  private:
@@ -429,13 +472,14 @@ class BufferStorage : public IndexStorage {
   std::string file_name_;
   IndexFormat::MetaHeader header_;
   IndexFormat::MetaFooter footer_;
-  std::map<std::string, IndexMapping::Segment> segments_{};
+  std::map<std::string, IndexMapping::SegmentInfo> segments_{};
   std::map<std::string, size_t> id_hash_{};
   size_t max_segment_size_{0};
   std::unique_ptr<char[]> segment_buffer_{nullptr};
 
   ailego::VecBufferPool::Pointer buffer_pool_{nullptr};
   ailego::VecBufferPoolHandle::Pointer buffer_pool_handle_{nullptr};
+  uint64_t current_header_start_offset_{0u};
 };
 
 INDEX_FACTORY_REGISTER_STORAGE(BufferStorage);
