@@ -11,12 +11,12 @@
 #include <iostream>
 #include <limits>
 #include <map>
+#include <memory>
 #include <mutex>
 #include <queue>
 #include <stdexcept>
 #include <string>
 #include <unordered_map>
-#include <memory>
 #include "concurrentqueue.h"
 
 namespace zvec {
@@ -28,23 +28,24 @@ using version_t = size_t;
 class LPMap;
 
 class LRUCache {
-  public:
-    typedef std::pair<block_id_t, version_t> BlockType;
-    typedef moodycamel::ConcurrentQueue<BlockType> ConcurrentQueue;
+ public:
+  typedef std::pair<block_id_t, version_t> BlockType;
+  typedef moodycamel::ConcurrentQueue<BlockType> ConcurrentQueue;
 
-    int init(size_t block_size);
+  int init(size_t block_size);
 
-    bool evict_single_block(BlockType &item);
+  bool evict_single_block(BlockType &item);
 
-    bool add_single_block(const LPMap *lp_map, const BlockType &block, int block_type);
+  bool add_single_block(const LPMap *lp_map, const BlockType &block,
+                        int block_type);
 
-    void clear_dead_node(const LPMap *lp_map);
+  void clear_dead_node(const LPMap *lp_map);
 
-  private:
-    constexpr static size_t CATCH_QUEUE_NUM = 3;
-    int block_size_;
-    std::vector<ConcurrentQueue> queues_;
-    alignas(64) std::atomic<size_t> evict_queue_insertions_{0};
+ private:
+  constexpr static size_t CATCH_QUEUE_NUM = 3;
+  int block_size_;
+  std::vector<ConcurrentQueue> queues_;
+  alignas(64) std::atomic<size_t> evict_queue_insertions_{0};
 };
 
 class LPMap {
@@ -95,15 +96,17 @@ class VecBufferPoolHandle;
 class VecBufferPool {
  public:
   typedef std::shared_ptr<VecBufferPool> Pointer;
-  
-  VecBufferPool(const std::string &filename, size_t pool_capacity, size_t block_size);
+
+  VecBufferPool(const std::string &filename, size_t pool_capacity,
+                size_t block_size);
   ~VecBufferPool() {
     close(fd_);
   }
 
   VecBufferPoolHandle get_handle();
 
-  char *acquire_buffer(block_id_t block_id, size_t offset, size_t size, int retry = 0);
+  char *acquire_buffer(block_id_t block_id, size_t offset, size_t size,
+                       int retry = 0);
 
   int get_meta(size_t offset, size_t length, char *buffer);
 
@@ -127,11 +130,10 @@ class VecBufferPool {
 struct VecBufferPoolHandle {
   VecBufferPoolHandle(VecBufferPool &pool) : pool(pool), hit_num_(0) {};
   VecBufferPoolHandle(VecBufferPoolHandle &&other)
-      : pool(other.pool),
-        hit_num_(other.hit_num_) {
+      : pool(other.pool), hit_num_(other.hit_num_) {
     other.hit_num_ = 0;
   }
-    
+
   ~VecBufferPoolHandle() = default;
 
   typedef std::shared_ptr<VecBufferPoolHandle> Pointer;

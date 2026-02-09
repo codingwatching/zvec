@@ -15,13 +15,12 @@
 #include <mutex>
 // #include <zvec/ailego/buffer/buffer_manager.h>
 #include <zvec/ailego/buffer/buffer_pool.h>
+#include <zvec/ailego/utility/time_helper.h>
 #include <zvec/core/framework/index_error.h>
 #include <zvec/core/framework/index_factory.h>
 #include <zvec/core/framework/index_mapping.h>
 #include <zvec/core/framework/index_version.h>
 #include "utility_params.h"
-
-#include <zvec/ailego/utility/time_helper.h>
 
 namespace zvec {
 namespace core {
@@ -81,7 +80,9 @@ class BufferStorage : public IndexStorage {
         }
         len = meta->data_size - offset;
       }
-      memmove(buf, (const uint8_t *)(owner_->get_buffer(offset, len, segment_id_)) + offset,
+      memmove(buf,
+              (const uint8_t *)(owner_->get_buffer(offset, len, segment_id_)) +
+                  offset,
               len);
       return len;
     }
@@ -98,7 +99,8 @@ class BufferStorage : public IndexStorage {
       size_t buffer_offset = segment_header_start_offset_ +
                              segment_header_->content_offset +
                              segment_->meta()->data_index + offset;
-      *data = owner_->get_buffer(buffer_offset, capacity_, segment_id_) + offset;
+      *data =
+          owner_->get_buffer(buffer_offset, capacity_, segment_id_) + offset;
       return len;
     }
 
@@ -113,8 +115,11 @@ class BufferStorage : public IndexStorage {
       size_t buffer_offset = segment_header_start_offset_ +
                              segment_header_->content_offset +
                              segment_->meta()->data_index + offset;
-      data.reset(owner_->buffer_pool_handle_.get(), segment_id_, owner_->get_buffer(buffer_offset, capacity_, segment_id_) + offset);
-      // data.reset(owner_->get_buffer(buffer_offset, capacity_, segment_id_) + offset);
+      data.reset(
+          owner_->buffer_pool_handle_.get(), segment_id_,
+          owner_->get_buffer(buffer_offset, capacity_, segment_id_) + offset);
+      // data.reset(owner_->get_buffer(buffer_offset, capacity_, segment_id_) +
+      // offset);
       if (data.data()) {
         return len;
       } else {
@@ -174,18 +179,20 @@ class BufferStorage : public IndexStorage {
   int open(const std::string &path, bool /*create*/) override {
     LOG_INFO("open buffer storage 1");
     file_name_ = path;
-    buffer_pool_ = std::make_shared<ailego::VecBufferPool>(path, 20lu * 1024 * 1024 * 1024, 2490368 * 2);
-    buffer_pool_handle_ =
-        std::make_shared<ailego::VecBufferPoolHandle>(buffer_pool_->get_handle());
+    buffer_pool_ = std::make_shared<ailego::VecBufferPool>(
+        path, 20lu * 1024 * 1024 * 1024, 2490368 * 2);
+    buffer_pool_handle_ = std::make_shared<ailego::VecBufferPoolHandle>(
+        buffer_pool_->get_handle());
     int ret = ParseToMapping();
-    LOG_ERROR("segment count: %lu, max_segment_size: %lu", segments_.size(), max_segment_size_);
-    for(auto iter = segments_.begin(); iter != segments_.end(); iter++) {
+    LOG_ERROR("segment count: %lu, max_segment_size: %lu", segments_.size(),
+              max_segment_size_);
+    for (auto iter = segments_.begin(); iter != segments_.end(); iter++) {
       auto seg = this->get(iter->first, 0);
       MemoryBlock block;
       int len = seg->read(0, block, 1);
       LOG_ERROR("segment %s: %d", iter->first.c_str(), len);
     }
-    if(ret != 0) {
+    if (ret != 0) {
       return ret;
     }
     return 0;
@@ -238,8 +245,8 @@ class BufferStorage : public IndexStorage {
   int ParseSegment(size_t offset) {
     segment_buffer_ = std::make_unique<char[]>(footer_.segments_meta_size);
     get_meta(offset, footer_.segments_meta_size, segment_buffer_.get());
-    if (ailego::Crc32c::Hash(segment_buffer_.get(), footer_.segments_meta_size, 0u) !=
-        footer_.segments_meta_crc) {
+    if (ailego::Crc32c::Hash(segment_buffer_.get(), footer_.segments_meta_size,
+                             0u) != footer_.segments_meta_crc) {
       LOG_ERROR("Index segments meta checksum is invalid.");
       return IndexError_InvalidChecksum;
     }
@@ -271,7 +278,8 @@ class BufferStorage : public IndexStorage {
                       iter->segment_id_offset),
           IndexMapping::SegmentInfo{IndexMapping::Segment{iter},
                                     current_header_start_offset_, &header_});
-      max_segment_size_ = std::max(max_segment_size_, iter->data_size + iter->padding_size);
+      max_segment_size_ =
+          std::max(max_segment_size_, iter->data_size + iter->padding_size);
       if (sizeof(IndexFormat::SegmentMeta) * footer_.segment_count >
           footer_.segments_meta_size) {
         return IndexError_InvalidLength;
