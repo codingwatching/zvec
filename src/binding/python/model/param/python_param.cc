@@ -812,10 +812,81 @@ Args:
             obj->set_is_linear(t[2].cast<bool>());
             return obj;
           }));
+
+  // binding hnsw rabitq query params
+  py::class_<HnswRabitqQueryParams, QueryParams,
+             std::shared_ptr<HnswRabitqQueryParams>>
+      hnsw_rabitq_query_params(m, "HnswRabitqQueryParam", R"pbdoc(
+Query parameters for HNSW RaBitQ (Hierarchical Navigable Small World with RaBitQ quantization) index.
+
+Controls the trade-off between search speed and accuracy via the `ef` parameter.
+RaBitQ provides efficient quantization while maintaining high search quality.
+
+Attributes:
+    type (IndexType): Always ``IndexType.HNSW_RABITQ``.
+    ef (int): Size of the dynamic candidate list during search.
+        Larger values improve recall but slow down search.
+        Default is 300.
+    radius (float): Search radius for range queries. Default is 0.0.
+    is_linear (bool): Force linear search. Default is False.
+    is_using_refiner (bool, optional): Whether to use refiner for the query. Default is False.
+
+Examples:
+    >>> params = HnswRabitqQueryParam(ef=300)
+    >>> print(params.ef)
+    300
+    >>> print(params.to_dict() if hasattr(params, 'to_dict') else params)
+    {"type":"HNSW_RABITQ", "ef":300}
+)pbdoc");
+  hnsw_rabitq_query_params
+      .def(py::init<int, float, bool, bool>(),
+           py::arg("ef") = core_interface::kDefaultHnswEfSearch,
+           py::arg("radius") = 0.0f, py::arg("is_linear") = false,
+           py::arg("is_using_refiner") = false,
+           R"pbdoc(
+Constructs an HnswRabitqQueryParam instance.
+
+Args:
+    ef (int, optional): Search-time candidate list size.
+        Higher values improve accuracy. Defaults to 300.
+    radius (float, optional): Search radius for range queries. Default is 0.0.
+    is_linear (bool, optional): Force linear search. Default is False.
+    is_using_refiner (bool, optional): Whether to use refiner for the query. Default is False.
+)pbdoc")
+      .def_property_readonly(
+          "ef",
+          [](const HnswRabitqQueryParams &self) -> int { return self.ef(); },
+          "int: Size of the dynamic candidate list during HNSW RaBitQ search.")
+      .def("__repr__",
+           [](const HnswRabitqQueryParams &self) -> std::string {
+             return "{"
+                    "\"type\":\"" +
+                    index_type_to_string(self.type()) +
+                    "\", \"ef\":" + std::to_string(self.ef()) +
+                    ", \"radius\":" + std::to_string(self.radius()) +
+                    ", \"is_linear\":" + std::to_string(self.is_linear()) +
+                    ", \"is_using_refiner\":" +
+                    std::to_string(self.is_using_refiner()) + "}";
+           })
+      .def(py::pickle(
+          [](const HnswRabitqQueryParams &self) {
+            return py::make_tuple(self.ef(), self.radius(), self.is_linear(),
+                                  self.is_using_refiner());
+          },
+          [](py::tuple t) {
+            if (t.size() != 4)
+              throw std::runtime_error(
+                  "Invalid state for HnswRabitqQueryParams");
+            auto obj =
+                std::make_shared<HnswRabitqQueryParams>(t[0].cast<int>());
+            obj->set_radius(t[1].cast<float>());
+            obj->set_is_linear(t[2].cast<bool>());
+            obj->set_is_using_refiner(t[3].cast<bool>());
+            return obj;
+          }));
 }
 
-void ZVecPyParams::bind_options(py::module_ &m) {
-  // binding collection options
+void ZVecPyParams::bind_options(py::module_ &m) {  // binding collection options
   py::class_<CollectionOptions>(m, "CollectionOption", R"pbdoc(
 Options for opening or creating a collection.
 
