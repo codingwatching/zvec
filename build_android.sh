@@ -21,6 +21,10 @@ echo "step1: Done!!!"
 
 # step2: cross build zvec based on android ndk
 echo "step2: building zvec for android..."
+
+# reset thirdparty directory
+git submodule foreach --recursive 'git stash --include-untracked'
+
 export ANDROID_SDK_ROOT=$HOME/Library/Android/sdk
 export ANDROID_HOME=$ANDROID_SDK_ROOT
 export ANDROID_NDK_HOME=$ANDROID_SDK_ROOT/ndk/28.2.13676358
