@@ -84,6 +84,16 @@ elseif(APPLE)
         zvec-ailego
         ${zvec_core_deps}
     )
+elseif(ANDROID)
+    target_link_libraries(zvec-core INTERFACE
+        -Wl,--whole-archive
+        zvec_core
+        -Wl,--no-whole-archive
+        -Wl,--start-group
+        zvec-ailego
+        ${zvec_core_deps}
+        -Wl,--end-group
+    )
 else()
     message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
 endif()
@@ -106,6 +116,17 @@ elseif(APPLE)
         zvec-ailego
         ${zvec_db_deps}
     )
+elseif(ANDROID)
+    target_link_libraries(zvec-db INTERFACE
+        zvec_db
+        zvec-core
+        zvec-ailego
+        -Wl,--start-group
+        ${zvec_db_deps}
+        -Wl,--end-group
+    )
+else()
+    message(FATAL_ERROR "Unsupported platform: ${CMAKE_SYSTEM_NAME}")
 endif()
 
 
@@ -114,6 +135,11 @@ add_executable(db-example db/main.cc)
 target_link_libraries(db-example PRIVATE
     zvec-db
 )
+if(ANDROID)
+    target_link_libraries(db-example PRIVATE
+        log
+    )
+endif()
 
 add_executable(core-example core/main.cc)
 target_link_libraries(core-example PRIVATE
