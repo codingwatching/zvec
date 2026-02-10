@@ -51,6 +51,7 @@ jobs:
       - name: Use host env to compile protoc
         shell: bash
         run: |
+          git submodule update --init
           cmake -S . -B build-host -G Ninja
           cmake --build build-host --target protoc --parallel
 
