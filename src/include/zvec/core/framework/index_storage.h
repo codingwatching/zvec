@@ -37,7 +37,8 @@ class IndexStorage : public IndexModule {
     };
 
     MemoryBlock() {}
-    MemoryBlock(ailego::VecBufferPoolHandle* buffer_pool_handle, int block_id, void *data)
+    MemoryBlock(ailego::VecBufferPoolHandle *buffer_pool_handle, int block_id,
+                void *data)
         : type_(MemoryBlockType::MBT_BUFFERPOOL) {
       buffer_pool_handle_ = buffer_pool_handle;
       buffer_block_id_ = block_id;
@@ -65,7 +66,8 @@ class IndexStorage : public IndexModule {
           this->reset(std::move(rhs.data_));
           break;
         case MemoryBlockType::MBT_BUFFERPOOL:
-          this->reset(std::move(rhs.buffer_pool_handle_), std::move(rhs.buffer_block_id_), std::move(rhs.data_));
+          this->reset(std::move(rhs.buffer_pool_handle_),
+                      std::move(rhs.buffer_block_id_), std::move(rhs.data_));
           break;
         default:
           break;
@@ -79,7 +81,8 @@ class IndexStorage : public IndexModule {
             this->reset(rhs.data_);
             break;
           case MemoryBlockType::MBT_BUFFERPOOL:
-            this->reset(rhs.buffer_pool_handle_, rhs.buffer_block_id_, rhs.data_);
+            this->reset(rhs.buffer_pool_handle_, rhs.buffer_block_id_,
+                        rhs.data_);
             buffer_pool_handle_->acquire_one(buffer_block_id_);
             break;
           default:
@@ -96,7 +99,8 @@ class IndexStorage : public IndexModule {
             this->reset(std::move(rhs.data_));
             break;
           case MemoryBlockType::MBT_BUFFERPOOL:
-            this->reset(std::move(rhs.buffer_pool_handle_), std::move(rhs.buffer_block_id_), std::move(rhs.data_));
+            this->reset(std::move(rhs.buffer_pool_handle_),
+                        std::move(rhs.buffer_block_id_), std::move(rhs.data_));
             break;
           default:
             break;
@@ -124,7 +128,8 @@ class IndexStorage : public IndexModule {
       return data_;
     }
 
-    void reset(ailego::VecBufferPoolHandle* buffer_pool_handle, int block_id, void *data) {
+    void reset(ailego::VecBufferPoolHandle *buffer_pool_handle, int block_id,
+               void *data) {
       if (type_ == MemoryBlockType::MBT_BUFFERPOOL) {
         buffer_pool_handle->release_one(buffer_block_id_);
       }
@@ -145,7 +150,7 @@ class IndexStorage : public IndexModule {
 
     MemoryBlockType type_{MBT_UNKNOWN};
     void *data_{nullptr};
-    mutable ailego::VecBufferPoolHandle* buffer_pool_handle_;
+    mutable ailego::VecBufferPoolHandle *buffer_pool_handle_;
     int buffer_block_id_{0};
   };
 
