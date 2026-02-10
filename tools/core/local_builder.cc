@@ -23,6 +23,7 @@
 #include "algorithm/hnsw-rabitq/hnsw_rabitq_streamer.h"
 #include "algorithm/hnsw-rabitq/rabitq_converter.h"
 #include "algorithm/hnsw/hnsw_params.h"
+#include "zvec/ailego/logger/logger.h"
 #include "zvec/core/framework/index_dumper.h"
 #include "zvec/core/framework/index_factory.h"
 #include "zvec/core/framework/index_logger.h"
@@ -105,8 +106,8 @@ bool prepare_params(YAML::Node &&config_params, ailego::Params &params) {
         ailego::Params sub_params;
         auto sub_node = it->second;
         if (!prepare_params(std::move(sub_node), sub_params)) {
-          cerr << "parse params error with key[" << it->first.as<string>()
-               << "]" << endl;
+          LOG_ERROR("parse params error with key[%s]",
+                    it->first.as<string>().c_str());
           return false;
         }
         params.set(it->first.as<string>(), sub_params);
@@ -165,39 +166,39 @@ int setup_hnsw_rabitq_streamer(const IndexStreamer::Pointer &streamer,
 bool check_config(YAML::Node &config_root) {
   auto common = config_root["BuilderCommon"];
   if (!common) {
-    cerr << "Can not find [BuilderClass] in config" << endl;
+    LOG_ERROR("Can not find [BuilderClass] in config");
     return false;
   }
   if (!common["BuilderClass"]) {
-    cerr << "Can not find [BuilderClass] in config" << endl;
+    LOG_ERROR("Can not find [BuilderClass] in config");
     return false;
   }
   if (!common["BuildFile"]) {
-    cerr << "Can not find [BuildFile] in config" << endl;
+    LOG_ERROR("Can not find [BuildFile] in config");
     return false;
   }
   if (common["NeedTrain"] && common["NeedTrain"].as<bool>()) {
     if (!common["TrainFile"]) {
-      cerr << "Can not find [TrainFile] in config" << endl;
+      LOG_ERROR("Can not find [TrainFile] in config");
       return false;
     }
   }
   if (common["UseTrainer"]) {
     if (!common["TrainerIndexPath"]) {
-      cerr << "Can not find [TrainerIndexPath] in config" << endl;
+      LOG_ERROR("Can not find [TrainerIndexPath] in config");
       return false;
     }
     if (!config_root["TrainerParams"]) {
-      cerr << "Can not find [TrainerParams] in config" << endl;
+      LOG_ERROR("Can not find [TrainerParams] in config");
       return false;
     }
   }
   if (!common["DumpPath"]) {
-    cerr << "Can not find [DumpPath] in config" << endl;
+    LOG_ERROR("Can not find [DumpPath] in config");
     return false;
   }
   if (!config_root["BuilderParams"]) {
-    cerr << "Can not find [BuilderParams] in config" << endl;
+    LOG_ERROR("Can not find [BuilderParams] in config");
     return false;
   }
   return true;
@@ -207,9 +208,9 @@ static inline size_t AlignSize(size_t size) {
   return (size + 0x1F) & (~0x1F);
 }
 
-int64_t dump_meta_segment(const IndexDumper::Pointer &dumper,
-                          const std::string &segment_id, const void *data,
-                          size_t size, size_t &writes) {
+bool dump_meta_segment(const IndexDumper::Pointer &dumper,
+                       const std::string &segment_id, const void *data,
+                       size_t size, size_t &writes) {
   size_t len = dumper->write(data, size);
   if (len != size) {
     LOG_ERROR("Dump segment %s data failed, expect: %lu, actual: %lu",
@@ -327,7 +328,7 @@ int do_build_sparse_by_streamer(IndexStreamer::Pointer &streamer,
     auto ctx = streamer->create_context();
     if (!ctx) {
       if (!error.exchange(true)) {
-        cerr << "Failed to create streamer context";
+        LOG_ERROR("Failed to create streamer context");
         errcode = IndexError_NoMemory;
       }
       return;
@@ -392,14 +393,14 @@ int do_build_sparse_by_streamer(IndexStreamer::Pointer &streamer,
     cond.wait_until(
         lk, std::chrono::system_clock::now() + std::chrono::seconds(15));
     if (error.load(std::memory_order_acquire)) {
-      cerr << "Failed to build index while waiting finish\n";
+      LOG_ERROR("Failed to build index while waiting finish");
       return errcode;
     }
     LOG_INFO("Built cnt %zu, finished percent %.3f%%", finished.load(),
              finished.load() * 100.0f / sparse_holder->count());
   }
   if (error.load(std::memory_order_acquire)) {
-    cerr << "Failed to build index while waiting finish\n";
+    LOG_ERROR("Failed to build index while waiting finish");
     return errcode;
   }
   pool.wait_finish();
@@ -410,30 +411,30 @@ int do_build_sparse_by_streamer(IndexStreamer::Pointer &streamer,
 int build_sparse_by_streamer(IndexStreamer::Pointer &streamer,
                              YAML::Node &config_common) {
   if (!config_common["IndexPath"]) {
-    cerr << "Miss params IndexPath for Streamer\n";
+    LOG_ERROR("Miss params IndexPath for Streamer");
     return IndexError_InvalidArgument;
   }
   string path = config_common["IndexPath"].as<string>();
 
   auto storage = IndexFactory::CreateStorage("MMapFileStorage");
   if (!storage) {
-    cerr << "Failed to create storage\n";
+    LOG_ERROR("Failed to create storage");
     return IndexError_NoExist;
   }
   ailego::Params params;
   int ret = storage->init(params);
   if (ret != 0) {
-    cerr << "Storage Failed init";
+    LOG_ERROR("Storage Failed init");
     return IndexError_Runtime;
   }
   ret = storage->open(path, true);
   if (ret != 0) {
-    cerr << "Storage Failed to open";
+    LOG_ERROR("Storage Failed to open");
     return IndexError_Runtime;
   }
   ret = streamer->open(storage);
   if (ret != 0) {
-    cerr << "Failed to open storage";
+    LOG_ERROR("Failed to open storage");
     return IndexError_Runtime;
   }
 
@@ -463,7 +464,7 @@ int do_build_by_streamer(IndexStreamer::Pointer &streamer,
   IndexReformer::Pointer reformer;
   if (!meta.reformer_name().empty()) {
     if (retrieval_mode != RM_DENSE) {
-      cerr << "Reformer not supported";
+      LOG_ERROR("Reformer not supported");
       return IndexError_Runtime;
     } else {
       reformer = IndexFactory::CreateReformer(meta.reformer_name());
@@ -502,7 +503,7 @@ int do_build_by_streamer(IndexStreamer::Pointer &streamer,
     auto ctx = streamer->create_context();
     if (!ctx) {
       if (!error.exchange(true)) {
-        cerr << "Failed to create streamer context";
+        LOG_ERROR("Failed to create streamer context");
         errcode = IndexError_NoMemory;
       }
       return;
@@ -527,14 +528,14 @@ int do_build_by_streamer(IndexStreamer::Pointer &streamer,
               add_to_streamer(key, holder->get_vector_by_index(id), qmeta, ctx);
         }
       } else {
-        cerr << "Retrieval mode not supported";
+        LOG_ERROR("Retrieval mode not supported");
         errcode = IndexError_Unsupported;
         return;
       }
 
       if (ailego_unlikely(ret != 0)) {
         if (!error.exchange(true)) {
-          LOG_ERROR("streamer add_impl failed\n");
+          LOG_ERROR("streamer add_impl failed");
           errcode = ret;
         }
         return;
@@ -543,7 +544,7 @@ int do_build_by_streamer(IndexStreamer::Pointer &streamer,
         ret = streamer->remove_impl(holder->get_key(id - keep_docs), ctx);
         if (ailego_unlikely(ret != 0)) {
           if (!error.exchange(true)) {
-            LOG_ERROR("streamer remove_impl failed\n");
+            LOG_ERROR("streamer remove_impl failed");
             errcode = ret;
           }
           return;
@@ -563,14 +564,14 @@ int do_build_by_streamer(IndexStreamer::Pointer &streamer,
     cond.wait_until(
         lk, std::chrono::system_clock::now() + std::chrono::seconds(15));
     if (error.load(std::memory_order_acquire)) {
-      cerr << "Failed to build index while waiting finish\n";
+      LOG_ERROR("Failed to build index while waiting finish");
       return errcode;
     }
     LOG_INFO("Built cnt %zu, finished percent %.3f%%", finished.load(),
              finished.load() * 100.0f / holder->count());
   }
   if (error.load(std::memory_order_acquire)) {
-    cerr << "Failed to build index while waiting finish\n";
+    LOG_ERROR("Failed to build index while waiting finish");
     return errcode;
   }
   pool.wait_finish();
@@ -581,7 +582,7 @@ int do_build_by_streamer(IndexStreamer::Pointer &streamer,
 int build_by_streamer(IndexStreamer::Pointer &streamer,
                       YAML::Node &config_common) {
   if (!config_common["IndexPath"]) {
-    cerr << "Miss params IndexPath for Streamer\n";
+    LOG_ERROR("Miss params IndexPath for Streamer");
     return IndexError_InvalidArgument;
   }
   string path = config_common["IndexPath"].as<string>();
@@ -590,25 +591,23 @@ int build_by_streamer(IndexStreamer::Pointer &streamer,
 
   auto storage = IndexFactory::CreateStorage("MMapFileStorage");
   if (!storage) {
-    cerr << "Failed to create storage\n";
+    LOG_ERROR("Failed to create storage");
     return IndexError_NoExist;
   }
   ailego::Params params;
-  params.set("proxima.mmap_file.storage.segment_meta_capacity",
-             20 * 1024 * 1024);
   int ret = storage->init(params);
   if (ret != 0) {
-    cerr << "Storage Failed init";
+    LOG_ERROR("Storage Failed init");
     return IndexError_Runtime;
   }
   ret = storage->open(path, true);
   if (ret != 0) {
-    cerr << "Storage Failed to open";
+    LOG_ERROR("Storage Failed to open");
     return IndexError_Runtime;
   }
   ret = streamer->open(storage);
   if (ret != 0) {
-    cerr << "Failed to open storage";
+    LOG_ERROR("Failed to open storage");
     return IndexError_Runtime;
   }
 
@@ -643,25 +642,25 @@ IndexSparseHolder::Pointer convert_sparse_holder(
 
   IndexConverter::Pointer converter = IndexFactory::CreateConverter(name);
   if (!converter) {
-    cerr << "Failed to create sparse converter " << name << endl;
+    LOG_ERROR("Failed to create sparse converter %s", name.c_str());
     return IndexSparseHolder::Pointer();
   }
 
   int ret = converter->init(in_holder->index_meta(), params);
   if (ret != 0) {
-    cerr << "Failed to init converter " << ret << endl;
+    LOG_ERROR("Failed to init converter %d", ret);
     return IndexSparseHolder::Pointer();
   }
 
   ret = converter->train(cast_holder);
   if (ret != 0) {
-    cerr << "Failed to train sparse converter " << ret << endl;
+    LOG_ERROR("Failed to train sparse converter %d", ret);
     return IndexSparseHolder::Pointer();
   }
 
   ret = converter->transform(cast_holder);
   if (ret != 0) {
-    cerr << "Failed to transform converter " << ret << endl;
+    LOG_ERROR("Failed to transform converter %d", ret);
     return IndexSparseHolder::Pointer();
   }
 
@@ -682,25 +681,25 @@ IndexHolder::Pointer convert_holder(const std::string &name,
 
   IndexConverter::Pointer converter = IndexFactory::CreateConverter(name);
   if (!converter) {
-    cerr << "Failed to create converter " << name << endl;
+    LOG_ERROR("Failed to create converter %s", name.c_str());
     return IndexHolder::Pointer();
   }
 
   int ret = converter->init(in_holder->index_meta(), params);
   if (ret != 0) {
-    cerr << "Failed to init converter " << ret << endl;
+    LOG_ERROR("Failed to init converter %d", ret);
     return IndexHolder::Pointer();
   }
 
   ret = converter->train(cast_holder);
   if (ret != 0) {
-    cerr << "Failed to train converter " << ret << endl;
+    LOG_ERROR("Failed to train converter %d", ret);
     return IndexHolder::Pointer();
   }
 
   ret = converter->transform(cast_holder);
   if (ret != 0) {
-    cerr << "Failed to transform converter " << ret << endl;
+    LOG_ERROR("Failed to transform converter %d", ret);
     return IndexHolder::Pointer();
   }
 
@@ -713,7 +712,7 @@ int do_build_sparse(YAML::Node &config_root, YAML::Node &config_common) {
   string build_file = config_common["BuildFile"].as<string>();
   VecsIndexSparseHolder::Pointer build_holder(new VecsIndexSparseHolder);
   if (!build_holder->load(build_file)) {
-    cerr << "Load input error: " << build_file << endl;
+    LOG_ERROR("Load input error: %s", build_file.c_str());
     return -1;
   }
   IndexMeta meta;
@@ -726,7 +725,7 @@ int do_build_sparse(YAML::Node &config_root, YAML::Node &config_common) {
     metric_name = config_common["MetricName"].as<string>();
     if (config_root["MetricParams"] &&
         !prepare_params(config_root["MetricParams"], metric_params)) {
-      cerr << "Failed to prepare metric params" << endl;
+      LOG_ERROR("Failed to prepare metric params");
       return -1;
     }
     build_holder->set_metric(metric_name, metric_params);
@@ -740,7 +739,7 @@ int do_build_sparse(YAML::Node &config_root, YAML::Node &config_common) {
     converter_name = config_common["ConverterName"].as<string>();
     if (config_root["ConverterParams"] &&
         !prepare_params(config_root["ConverterParams"], converter_params)) {
-      cerr << "Failed to prepare converter params" << endl;
+      LOG_ERROR("Failed to prepare converter params");
       return -1;
     }
   }
@@ -765,7 +764,7 @@ int do_build_sparse(YAML::Node &config_root, YAML::Node &config_common) {
     streamer = IndexFactory::CreateStreamer(builder_class.c_str());
   }
   if (!builder && !streamer) {
-    cerr << "Failed to create builder " << builder_class << endl;
+    LOG_ERROR("Failed to create builder %s", builder_class.c_str());
     return -1;
   }
   cout << "Created builder " << builder_class << endl;
@@ -773,13 +772,13 @@ int do_build_sparse(YAML::Node &config_root, YAML::Node &config_common) {
   IndexSparseHolder::Pointer cv_build_holder = convert_sparse_holder(
       converter_name, converter_params, build_holder, meta);
   if (!cv_build_holder) {
-    cerr << "Convert holder failed." << endl;
+    LOG_ERROR("Convert holder failed.");
     return -1;
   }
 
   ailego::Params params;
   if (!prepare_params(config_root["BuilderParams"], params)) {
-    cerr << "Failed to prepare params" << endl;
+    LOG_ERROR("Failed to prepare params");
     return -1;
   }
 
@@ -787,7 +786,7 @@ int do_build_sparse(YAML::Node &config_root, YAML::Node &config_common) {
   int ret =
       builder ? builder->init(meta, params) : streamer->init(meta, params);
   if (ret < 0) {
-    cerr << "Failed to init builder, ret=" << ret << endl;
+    LOG_ERROR("Failed to init builder, ret=%d", ret);
     return -1;
   }
   ailego::ElapsedTime timer;
@@ -798,7 +797,7 @@ int do_build_sparse(YAML::Node &config_root, YAML::Node &config_common) {
     string train_file = config_common["TrainFile"].as<string>();
     VecsIndexSparseHolder::Pointer train_holder(new VecsIndexSparseHolder);
     if (!train_holder->load(train_file)) {
-      cerr << "Load input error: " << train_file << endl;
+      LOG_ERROR("Load input error: %s", train_file.c_str());
       return -1;
     }
 
@@ -809,7 +808,7 @@ int do_build_sparse(YAML::Node &config_root, YAML::Node &config_common) {
     IndexSparseHolder::Pointer cv_train_holder = convert_sparse_holder(
         converter_name, converter_params, train_holder, meta);
     if (!cv_train_holder) {
-      cerr << "Convert train holder failed." << endl;
+      LOG_ERROR("Convert train holder failed.");
       return -1;
     }
 
@@ -819,7 +818,7 @@ int do_build_sparse(YAML::Node &config_root, YAML::Node &config_common) {
     size_t train_time = timer.milli_seconds();
 
     if (ret < 0) {
-      cerr << "Failed to train in builder, ret=" << ret << endl;
+      LOG_ERROR("Failed to train in builder, ret=%d", ret);
       return -1;
     }
     cout << "Train finished, consume " << train_time << "ms." << endl;
@@ -838,7 +837,7 @@ int do_build_sparse(YAML::Node &config_root, YAML::Node &config_common) {
   }
   size_t build_time = timer.milli_seconds();
   if (ret < 0) {
-    cerr << "Failed to build in builder, ret=" << ret << endl;
+    LOG_ERROR("Failed to build in builder, ret=%d", ret);
     return -1;
   }
   cout << "Build finished, consume " << build_time << "ms." << endl;
@@ -847,13 +846,13 @@ int do_build_sparse(YAML::Node &config_root, YAML::Node &config_common) {
   // DUMP
   IndexDumper::Pointer dumper = IndexFactory::CreateDumper("FileDumper");
   if (!dumper) {
-    cerr << "Failed to create FileDumper." << endl;
+    LOG_ERROR("Failed to create FileDumper.");
     return -1;
   }
   string dump_prefix = config_common["DumpPath"].as<string>();
   ret = dumper->create(dump_prefix);
   if (ret != 0) {
-    cerr << "Failed to create in dumper, ret=" << ret << endl;
+    LOG_ERROR("Failed to create in dumper, ret=%d", ret);
     return -1;
   }
   timer.reset();
@@ -862,7 +861,7 @@ int do_build_sparse(YAML::Node &config_root, YAML::Node &config_common) {
   if (ret == IndexError_NotImplemented) {
     LOG_WARN("Dump index not implemented");
   } else if (ret < 0) {
-    cerr << "Failed to dump in builder, ret=" << ret << endl;
+    LOG_ERROR("Failed to dump in builder, ret=%d", ret);
     return -1;
   }
 
@@ -877,7 +876,7 @@ int do_build_sparse(YAML::Node &config_root, YAML::Node &config_common) {
 
   ret = dumper->close();
   if (ret != 0) {
-    cerr << "Dumper failed to close, ret=" << ret << endl;
+    LOG_ERROR("Dumper failed to close, ret=%d", ret);
     return -1;
   }
   std::cout << "Dump to [" << dump_prefix << "] finished, consume " << dump_time
@@ -908,7 +907,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
   string build_file = config_common["BuildFile"].as<string>();
   VecsIndexHolder::Pointer build_holder(new VecsIndexHolder);
   if (!build_holder->load(build_file)) {
-    cerr << "Load input error: " << build_file << endl;
+    LOG_ERROR("Load input error: %s", build_file.c_str());
     return -1;
   }
   IndexMeta meta;
@@ -921,7 +920,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
     metric_name = config_common["MetricName"].as<string>();
     if (config_root["MetricParams"] &&
         !prepare_params(config_root["MetricParams"], metric_params)) {
-      cerr << "Failed to prepare metric params" << endl;
+      LOG_ERROR("Failed to prepare metric params");
       return -1;
     }
     build_holder->set_metric(metric_name, metric_params);
@@ -935,7 +934,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
     converter_name = config_common["ConverterName"].as<string>();
     if (config_root["ConverterParams"] &&
         !prepare_params(config_root["ConverterParams"], converter_params)) {
-      cerr << "Failed to prepare converter params" << endl;
+      LOG_ERROR("Failed to prepare converter params");
       return -1;
     }
   }
@@ -969,7 +968,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
     streamer = IndexFactory::CreateStreamer(builder_class.c_str());
   }
   if (!builder && !streamer) {
-    cerr << "Failed to create builder " << builder_class << endl;
+    LOG_ERROR("Failed to create builder %s", builder_class.c_str());
     return -1;
   }
   cout << "Created builder " << builder_class << endl;
@@ -978,7 +977,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
   IndexHolder::Pointer cv_build_holder =
       convert_holder(converter_name, converter_params, build_holder, meta);
   if (!cv_build_holder) {
-    cerr << "Convert holder failed." << endl;
+    LOG_ERROR("Convert holder failed.");
     return -1;
   }
   meta.set_major_order(order);
@@ -991,7 +990,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
     params.set(PARAM_FLAT_USE_ID_MAP, false);
   }
   if (!prepare_params(config_root["BuilderParams"], params)) {
-    cerr << "Failed to prepare params" << endl;
+    LOG_ERROR("Failed to prepare params");
     return -1;
   }
 
@@ -999,7 +998,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
   int ret =
       builder ? builder->init(meta, params) : streamer->init(meta, params);
   if (ret < 0) {
-    cerr << "Failed to init builder, ret=" << ret << endl;
+    LOG_ERROR("Failed to init builder, ret=%d", ret);
     return -1;
   }
   ailego::ElapsedTime timer;
@@ -1008,7 +1007,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
   if (config_common["UseTrainer"] && config_common["UseTrainer"].as<bool>()) {
     ailego::Params trainer_params;
     if (!prepare_params(config_root["TrainerParams"], trainer_params)) {
-      cerr << "Failed to prepare trainer params" << endl;
+      LOG_ERROR("Failed to prepare trainer params");
       return -1;
     }
 
@@ -1016,19 +1015,19 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
     if (config_common["TrainerIndexPath"]) {
       train_index_path = config_common["TrainerIndexPath"].as<string>();
       if (train_index_path.empty()) {
-        cerr << "invalid TrainerIndexPath format" << std::endl;
+        LOG_ERROR("invalid TrainerIndexPath format");
         return -1;
       }
       cout << "Trainer index path: " << train_index_path << "\n";
     } else {
-      cerr << "Need [TrainerIndexPath] config" << std::endl;
+      LOG_ERROR("Need [TrainerIndexPath] config");
       return -1;
     }
 
     IndexTrainer::Pointer trainer =
         IndexFactory::CreateTrainer("StratifiedClusterTrainer");
     if (trainer->init(meta, trainer_params) != 0) {
-      cerr << "trainer init failed" << std::endl;
+      LOG_ERROR("trainer init failed");
       return -1;
     }
 
@@ -1036,17 +1035,17 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
       IndexStorage::Pointer container =
           IndexFactory::CreateStorage("MMapFileReadStorage");
       if (!container) {
-        cerr << "Failed to create MMapFileReadStorage" << endl;
+        LOG_ERROR("Failed to create MMapFileReadStorage");
         return -1;
       }
       container->init(ailego::Params());
       if (container->open(train_index_path, false) != 0) {
-        cerr << "MMapFileReadStorage failed to load "
-             << train_index_path.c_str() << endl;
+        LOG_ERROR("MMapFileReadStorage failed to load %s",
+                  train_index_path.c_str());
         return -1;
       }
       if (trainer->load(container) != 0) {
-        cerr << "Trainer failed to load container" << endl;
+        LOG_ERROR("Trainer failed to load container");
         return -1;
       };
     } else {
@@ -1054,7 +1053,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
       string train_file = config_common["TrainFile"].as<string>();
       VecsIndexHolder::Pointer train_holder(new VecsIndexHolder);
       if (!train_holder->load(train_file)) {
-        cerr << "Load input error: " << train_file << endl;
+        LOG_ERROR("Load input error: %s", train_file.c_str());
         return -1;
       }
       if (!metric_name.empty()) {
@@ -1066,7 +1065,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
       IndexHolder::Pointer cv_train_holder =
           convert_holder(converter_name, converter_params, train_holder, meta);
       if (!cv_train_holder) {
-        cerr << "Convert train holder failed." << endl;
+        LOG_ERROR("Convert train holder failed.");
         return -1;
       }
 
@@ -1075,27 +1074,27 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
 
       ret = trainer->train(cv_train_holder);
       if (ret != 0) {
-        cerr << "trainer train_index failed with " << ret << std::endl;
+        LOG_ERROR("trainer train_index failed with %d", ret);
         return -1;
       }
 
       std::cout << "train data done!" << std::endl;
       IndexDumper::Pointer dumper = IndexFactory::CreateDumper("FileDumper");
       if (!dumper) {
-        cerr << "Failed to create FileDumper." << endl;
+        LOG_ERROR("Failed to create FileDumper.");
         return -1;
       }
       if (dumper->init(ailego::Params()) != 0) {
-        cerr << "Failed to init FileDumper." << endl;
+        LOG_ERROR("Failed to init FileDumper.");
         return -1;
       }
       ret = dumper->create(train_index_path);
       if (ret != 0) {
-        cerr << "Failed to create in dumper, ret=" << ret << endl;
+        LOG_ERROR("Failed to create in dumper, ret=%d", ret);
         return -1;
       }
       if (trainer->dump(dumper) != 0) {
-        cerr << "trainer dump_index failed" << std::endl;
+        LOG_ERROR("trainer dump_index failed");
         return -1;
       }
       dumper->close();
@@ -1104,7 +1103,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
     ret = builder->train(trainer);
     size_t train_time = timer.milli_seconds();
     if (ret < 0) {
-      cerr << "Failed to train in builder, ret=" << ret << endl;
+      LOG_ERROR("Failed to train in builder, ret=%d", ret);
       return -1;
     }
     cout << "Train finished, consume " << train_time << "ms." << endl;
@@ -1113,7 +1112,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
     string train_file = config_common["TrainFile"].as<string>();
     VecsIndexHolder::Pointer train_holder(new VecsIndexHolder);
     if (!train_holder->load(train_file)) {
-      cerr << "Load input error: " << train_file << endl;
+      LOG_ERROR("Load input error: %s", train_file.c_str());
       return -1;
     }
 
@@ -1123,7 +1122,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
     IndexHolder::Pointer cv_train_holder =
         convert_holder(converter_name, converter_params, train_holder, meta);
     if (!cv_train_holder) {
-      cerr << "Convert train holder failed." << endl;
+      LOG_ERROR("Convert train holder failed.");
       return -1;
     }
 
@@ -1132,7 +1131,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
     ret = builder->train(std::move(cv_train_holder));
     size_t train_time = timer.milli_seconds();
     if (ret < 0) {
-      cerr << "Failed to train in builder, ret=" << ret << endl;
+      LOG_ERROR("Failed to train in builder, ret=%d", ret);
       return -1;
     }
     cout << "Train finished, consume " << train_time << "ms." << endl;
@@ -1167,7 +1166,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
   }
   size_t build_time = timer.milli_seconds();
   if (ret < 0) {
-    cerr << "Failed to build in builder, ret=" << ret << endl;
+    LOG_ERROR("Failed to build in builder, ret=%d", ret);
     return -1;
   }
   cout << "Build finished, consume " << build_time << "ms." << endl;
@@ -1176,13 +1175,13 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
   // DUMP
   IndexDumper::Pointer dumper = IndexFactory::CreateDumper("FileDumper");
   if (!dumper) {
-    cerr << "Failed to create FileDumper." << endl;
+    LOG_ERROR("Failed to create FileDumper.");
     return -1;
   }
   string dump_prefix = config_common["DumpPath"].as<string>();
   ret = dumper->create(dump_prefix);
   if (ret != 0) {
-    cerr << "Failed to create in dumper, ret=" << ret << endl;
+    LOG_ERROR("Failed to create in dumper, ret=%d", ret);
     return -1;
   }
   timer.reset();
@@ -1191,7 +1190,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
   if (ret == IndexError_NotImplemented) {
     LOG_WARN("Dump index not implemented");
   } else if (ret < 0) {
-    cerr << "Failed to dump in builder, ret=" << ret << endl;
+    LOG_ERROR("Failed to dump in builder, ret=%d", ret);
     return -1;
   }
 
@@ -1206,7 +1205,7 @@ int do_build(YAML::Node &config_root, YAML::Node &config_common) {
 
   ret = dumper->close();
   if (ret != 0) {
-    cerr << "Dumper failed to close, ret=" << ret << endl;
+    LOG_ERROR("Dumper failed to close, ret=%d", ret);
     return -1;
   }
   std::cout << "Dump to [" << dump_prefix << "] finished, consume " << dump_time
@@ -1242,8 +1241,7 @@ int main(int argc, char *argv[]) {
   std::string error;
   for (int i = 2; i < argc; ++i) {
     if (!broker.emplace(argv[i], &error)) {
-      cerr << "Failed to load plugin: " << argv[i] << " (" << error << ")"
-           << endl;
+      LOG_ERROR("Failed to load plugin: %s (%s)", argv[i], error.c_str());
       return -1;
     }
   }
@@ -1251,7 +1249,7 @@ int main(int argc, char *argv[]) {
   try {
     config_root = YAML::LoadFile(argv[1]);
   } catch (...) {
-    cerr << "Load YAML file[" << argv[1] << "] failed!" << endl;
+    LOG_ERROR("Load YAML file[%s] failed!", argv[1]);
     return -1;
   }
   if (!check_config(config_root)) {
