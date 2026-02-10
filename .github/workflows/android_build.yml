@@ -71,7 +71,7 @@ jobs:
             -DANDROID_STL=c++_shared \
             -DBUILD_PYTHON_BINDINGS=OFF \
             -DBUILD_TOOLS=OFF \
-            -DGLOBAL_CC_PROTOBUF_PROTOC=build-host/bin/protoc \
+            -DGLOBAL_CC_PROTOBUF_PROTOC="$GITHUB_WORKSPACE/build-host/bin/protoc" \
 
       - name: Build
         shell: bash
