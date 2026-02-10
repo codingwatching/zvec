@@ -14,14 +14,7 @@
 #pragma once
 
 #include <string>
-#include <vector>
 #include <rabitqlib/utils/rotator.hpp>
-#include <zvec/ailego/hash/crc32c.h>
-#include "zvec/core/framework/index_dumper.h"
-#include "zvec/core/framework/index_error.h"
-#include "zvec/core/framework/index_logger.h"
-#include "hnsw_rabitq_entity.h"
-#include "hnsw_rabitq_index_format.h"
 
 namespace zvec {
 namespace core {
@@ -30,12 +23,11 @@ namespace core {
 static const std::string PARAM_RABITQ_NUM_CLUSTERS(
     "proxima.rabitq.num_clusters");
 static const std::string PARAM_RABITQ_TOTAL_BITS("proxima.rabitq.total_bits");
-static const std::string PARAM_RABITQ_REFORMER_METRIC_NAME(
-    "proxima.rabitq.reformer.metric_name");
+static const std::string PARAM_RABITQ_METRIC_NAME("proxima.rabitq.metric_name");
 static const std::string PARAM_RABITQ_ROTATOR_TYPE(
     "proxima.rabitq.rotator.type");
-static const std::string PARAM_RABITQ_CONVERTER_SAMPLE_COUNT(
-    "proxima.rabitq.converter.sample_count");
+static const std::string PARAM_RABITQ_SAMPLE_COUNT(
+    "proxima.rabitq.sample_count");
 
 // Default values
 static constexpr size_t kDefaultNumClusters = 16;
@@ -43,96 +35,6 @@ static constexpr size_t kDefaultNumClusters = 16;
 // recall, respectively—without accessing raw vectors for reranking
 static constexpr size_t kDefaultRabitqTotalBits = 7;
 
-// Common dump implementation for RabitqConverter and RabitqReformer
-inline int dump_rabitq_centroids(
-    const IndexDumper::Pointer &dumper, size_t dimension, size_t padded_dim,
-    size_t ex_bits, size_t num_clusters, rabitqlib::RotatorType rotator_type,
-    const std::vector<float> &rotated_centroids,
-    const std::vector<float> &centroids,
-    const std::unique_ptr<rabitqlib::Rotator<float>> &rotator,
-    size_t *out_dumped_size = nullptr) {
-  auto align_size = [](size_t size) -> size_t {
-    return (size + 0x1F) & (~0x1F);
-  };
-
-  uint32_t crc = 0;
-  size_t dumped_size = 0;
-
-  // Write header
-  RabitqConverterHeader header;
-  header.dim = static_cast<uint32_t>(dimension);
-  header.padded_dim = static_cast<uint32_t>(padded_dim);
-  header.num_clusters = static_cast<uint32_t>(num_clusters);
-  header.ex_bits = static_cast<uint8_t>(ex_bits);
-  header.rotator_type = static_cast<uint8_t>(rotator_type);
-  header.rotator_size = static_cast<uint32_t>(rotator->dump_bytes());
-  size_t size = dumper->write(&header, sizeof(header));
-  if (size != sizeof(header)) {
-    LOG_ERROR("Failed to write header: written=%zu, expected=%zu", size,
-              sizeof(header));
-    return IndexError_WriteData;
-  }
-  crc = ailego::Crc32c::Hash(&header, sizeof(header), crc);
-  dumped_size += size;
-
-  // Write rotated centroids
-  size = dumper->write(rotated_centroids.data(),
-                       rotated_centroids.size() * sizeof(float));
-  if (size != rotated_centroids.size() * sizeof(float)) {
-    LOG_ERROR("Failed to write rotated centroids: written=%zu, expected=%zu",
-              size, rotated_centroids.size() * sizeof(float));
-    return IndexError_WriteData;
-  }
-  crc = ailego::Crc32c::Hash(rotated_centroids.data(),
-                             rotated_centroids.size() * sizeof(float), crc);
-  dumped_size += size;
-
-  // Write original centroids
-  size = dumper->write(centroids.data(), centroids.size() * sizeof(float));
-  if (size != centroids.size() * sizeof(float)) {
-    LOG_ERROR("Failed to write centroids: written=%zu, expected=%zu", size,
-              centroids.size() * sizeof(float));
-    return IndexError_WriteData;
-  }
-  crc = ailego::Crc32c::Hash(centroids.data(), centroids.size() * sizeof(float),
-                             crc);
-  dumped_size += size;
-
-  // Write rotator data
-  std::vector<char> buffer(rotator->dump_bytes());
-  rotator->save(buffer.data());
-  size = dumper->write(buffer.data(), buffer.size());
-  if (size != buffer.size()) {
-    LOG_ERROR("Failed to write rotator data: written=%zu, expected=%zu", size,
-              buffer.size());
-    return IndexError_WriteData;
-  }
-  crc = ailego::Crc32c::Hash(buffer.data(), buffer.size(), crc);
-  dumped_size += size;
-
-  // Write padding
-  size_t padding_size = align_size(dumped_size) - dumped_size;
-  if (padding_size > 0) {
-    std::string padding(padding_size, '\0');
-    if (dumper->write(padding.data(), padding_size) != padding_size) {
-      LOG_ERROR("Append padding failed, size %lu", padding_size);
-      return IndexError_WriteData;
-    }
-  }
-
-  int ret =
-      dumper->append(RABITQ_CONVERER_SEG_ID, dumped_size, padding_size, crc);
-  if (ret != 0) {
-    LOG_ERROR("Dump segment %s meta failed, ret=%d",
-              RABITQ_CONVERER_SEG_ID.c_str(), ret);
-    return ret;
-  }
-
-  if (out_dumped_size) {
-    *out_dumped_size = dumped_size;
-  }
-  return 0;
-}
 
 }  // namespace core
 }  // namespace zvec

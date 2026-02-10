@@ -18,7 +18,6 @@
 #include <ailego/pattern/defer.h>
 #include <ailego/utility/memory_helper.h>
 #include <arrow/compute/ordering.h>
-#include "algorithm/hnsw-rabitq/hnsw_rabitq_index_format.h"
 #include "algorithm/hnsw-rabitq/rabitq_reformer.h"
 #include "zvec/ailego/container/params.h"
 #include "zvec/ailego/logger/logger.h"
@@ -27,6 +26,7 @@
 #include "hnsw_rabitq_dist_calculator.h"
 #include "hnsw_rabitq_index_provider.h"
 #include "rabitq_params.h"
+#include "rabitq_utils.h"
 
 namespace zvec {
 namespace core {
@@ -285,7 +285,7 @@ int HnswRabitqStreamer::open(IndexStorage::Pointer stg) {
   if (reformer_ == nullptr) {
     reformer_ = std::make_shared<RabitqReformer>();
     ailego::Params reformer_params;
-    reformer_params.set(PARAM_RABITQ_REFORMER_METRIC_NAME, meta_.metric_name());
+    reformer_params.set(PARAM_RABITQ_METRIC_NAME, meta_.metric_name());
     int ret = reformer_->init(reformer_params);
     if (ret != 0) {
       LOG_ERROR("Failed to initialize RabitqReformer: %d", ret);

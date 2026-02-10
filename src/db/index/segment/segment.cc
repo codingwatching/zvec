@@ -1750,7 +1750,7 @@ Status SegmentImpl::create_vector_index(
                            rabitq_params->total_bits());
       converter_params.set(core::PARAM_RABITQ_NUM_CLUSTERS,
                            rabitq_params->num_clusters());
-      converter_params.set(core::PARAM_RABITQ_CONVERTER_SAMPLE_COUNT,
+      converter_params.set(core::PARAM_RABITQ_SAMPLE_COUNT,
                            rabitq_params->sample_count());
       if (int ret = converter->init(index_meta, converter_params); ret != 0) {
         return Status::InternalError("Failed to init rabitq converter:", ret);

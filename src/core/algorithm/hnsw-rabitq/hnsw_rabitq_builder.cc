@@ -304,7 +304,7 @@ int HnswRabitqBuilder::train_converter_and_load_reformer(
 
   reformer_ = std::make_shared<RabitqReformer>();
   ailego::Params reformer_params;
-  reformer_params.set(PARAM_RABITQ_REFORMER_METRIC_NAME, meta_.metric_name());
+  reformer_params.set(PARAM_RABITQ_METRIC_NAME, meta_.metric_name());
   ret = reformer_->init(reformer_params);
   if (ret != 0) {
     LOG_ERROR("Failed to initialize RabitqReformer: %d", ret);

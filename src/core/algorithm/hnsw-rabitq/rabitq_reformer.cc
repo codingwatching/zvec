@@ -14,34 +14,26 @@
 
 #include "rabitq_reformer.h"
 #include <string>
+#include <rabitqlib/defines.hpp>
 #include <rabitqlib/index/query.hpp>
 #include <zvec/ailego/logger/logger.h>
 #include <zvec/ailego/utility/string_helper.h>
-#include "algorithm/hnsw-rabitq/rabitq_converter.h"
-#include "rabitqlib/defines.hpp"
 #include "zvec/core/framework/index_error.h"
 #include "zvec/core/framework/index_factory.h"
-#include "zvec/core/framework/index_helper.h"
-#include "zvec/core/framework/index_logger.h"
 #include "zvec/core/framework/index_meta.h"
-#include "zvec/core/framework/index_metric.h"
 #include "zvec/core/framework/index_storage.h"
-#include "zvec/db/type.h"
-#include "hnsw_rabitq_entity.h"
-#include "hnsw_rabitq_index_format.h"
+#include "rabitq_converter.h"
+#include "rabitq_utils.h"
 
 namespace zvec {
 namespace core {
-
-RabitqReformer::RabitqReformer() {}
 
 RabitqReformer::~RabitqReformer() {
   this->cleanup();
 }
 
 int RabitqReformer::init(const ailego::Params &params) {
-  std::string metric_name =
-      params.get_as_string(PARAM_RABITQ_REFORMER_METRIC_NAME);
+  std::string metric_name = params.get_as_string(PARAM_RABITQ_METRIC_NAME);
   if (metric_name == "SquaredEuclidean") {
     metric_type_ = rabitqlib::METRIC_L2;
   } else if (metric_name == "InnerProduct") {
@@ -432,8 +424,7 @@ int RabitqReformer::dump(const IndexStorage::Pointer &storage) {
   return 0;
 }
 
-INDEX_FACTORY_REGISTER_REFORMER_ALIAS(RabitqReformer, RabitqReformer,
-                                      IndexMeta::DataType::DT_FP32);
+INDEX_FACTORY_REGISTER_REFORMER_ALIAS(RabitqReformer, RabitqReformer);
 
 }  // namespace core
 }  // namespace zvec

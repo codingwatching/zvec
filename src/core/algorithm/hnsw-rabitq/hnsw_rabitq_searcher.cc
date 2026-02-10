@@ -54,7 +54,7 @@ int HnswRabitqSearcher::init(const ailego::Params &search_params) {
   entity_.set_neighbors_in_memory(neighbors_in_memory_enabled_);
 
   ailego::Params reformer_params;
-  reformer_params.set(PARAM_RABITQ_REFORMER_METRIC_NAME, meta_.metric_name());
+  reformer_params.set(PARAM_RABITQ_METRIC_NAME, meta_.metric_name());
   int ret = reformer_.init(reformer_params);
   if (ret != 0) {
     LOG_ERROR("Failed to initialize RabitqReformer: %d", ret);

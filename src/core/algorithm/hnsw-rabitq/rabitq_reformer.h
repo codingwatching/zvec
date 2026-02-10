@@ -34,9 +34,7 @@ class RabitqReformer : public IndexReformer {
   typedef std::shared_ptr<RabitqReformer> Pointer;
 
   //! Constructor
-  RabitqReformer();
-
-  RabitqReformer(IndexMeta::DataType) {}
+  RabitqReformer() = default;
 
   //! Destructor
   ~RabitqReformer() override;

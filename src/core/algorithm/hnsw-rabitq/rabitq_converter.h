@@ -33,9 +33,7 @@ class RabitqReformer;
 class RabitqConverter : public IndexConverter {
  public:
   //! Constructor
-  RabitqConverter(IndexMeta::DataType) {}
-
-  RabitqConverter();
+  RabitqConverter() = default;
 
   //! Destructor
   ~RabitqConverter() override;
@@ -76,10 +74,6 @@ class RabitqConverter : public IndexConverter {
   static inline size_t AlignSize(size_t size) {
     return (size + 0x1F) & (~0x1F);
   }
-
-  //! Quantize a single vector
-  int quantize_vector(const float *raw_vector, size_t cluster_id,
-                      std::string *quantized_data);
 
  private:
   IndexMeta meta_;

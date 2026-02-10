@@ -20,26 +20,17 @@
 #include <zvec/ailego/parallel/thread_pool.h>
 #include <zvec/ailego/utility/string_helper.h>
 #include "algorithm/hnsw-rabitq/rabitq_reformer.h"
-#include "core/algorithm/cluster/cluster_params.h"
 #include "zvec/core/framework/index_cluster.h"
 #include "zvec/core/framework/index_error.h"
 #include "zvec/core/framework/index_factory.h"
 #include "zvec/core/framework/index_features.h"
-#include "zvec/core/framework/index_helper.h"
 #include "zvec/core/framework/index_holder.h"
 #include "zvec/core/framework/index_meta.h"
-#include "hnsw_rabitq_entity.h"
-#include "hnsw_rabitq_index_format.h"
-#include "rabitq_holder_wrapper.h"
 #include "rabitq_params.h"
+#include "rabitq_utils.h"
 
 namespace zvec {
 namespace core {
-
-// Segment ID for storing centroids
-static constexpr const char *kRabitqCentroidsSegmentId = "rabitq.centroids";
-
-RabitqConverter::RabitqConverter() {}
 
 RabitqConverter::~RabitqConverter() {
   this->cleanup();
@@ -90,7 +81,7 @@ int RabitqConverter::init(const IndexMeta &meta, const ailego::Params &params) {
     LOG_ERROR("RaBitQ only supports FP32 data type");
     return IndexError_Unsupported;
   }
-  params.get(PARAM_RABITQ_CONVERTER_SAMPLE_COUNT, &sample_count_);
+  params.get(PARAM_RABITQ_SAMPLE_COUNT, &sample_count_);
 
   std::string rotator_type_str;
   params.get(PARAM_RABITQ_ROTATOR_TYPE, &rotator_type_str);
@@ -269,40 +260,6 @@ int RabitqConverter::dump(const IndexDumper::Pointer &dumper) {
   return 0;
 }
 
-int RabitqConverter::quantize_vector(const float *raw_vector, size_t cluster_id,
-                                     std::string *quantized_data) {
-  // const float *centroid = &rotated_centroids_[cluster_id * padded_dim_];
-
-  // rabitq::rabitqquantizer quantizer(dimension_, ex_bits_, metric);
-
-  // // quantize
-  // rabitq::quantizedvector qvec;
-  // qvec.cluster_id = static_cast<uint32_t>(cluster_id);
-  // quantizer.quantize_vector(raw_vector, centroid, &qvec);
-
-  // // serialize: cluster_id + bin_data + ex_data + factors
-  // quantized_data->clear();
-  // quantized_data->reserve(qvec.total_bytes());
-
-  // quantized_data->append(reinterpret_cast<const char *>(&qvec.cluster_id),
-  //                        sizeof(qvec.cluster_id));
-  // quantized_data->append(reinterpret_cast<const char
-  // *>(qvec.bin_data.data()),
-  //                        qvec.bin_data.size());
-  // quantized_data->append(reinterpret_cast<const char
-  // *>(qvec.ex_data.data()),
-  //                        qvec.ex_data.size());
-  // quantized_data->append(reinterpret_cast<const char *>(&qvec.f_add),
-  //                        sizeof(qvec.f_add));
-  // quantized_data->append(reinterpret_cast<const char *>(&qvec.f_rescale),
-  //                        sizeof(qvec.f_rescale));
-  // quantized_data->append(reinterpret_cast<const char *>(&qvec.f_error),
-  //                        sizeof(qvec.f_error));
-
-  // return 0;
-  return 0;
-}
-
 int RabitqConverter::to_reformer(IndexReformer::Pointer *reformer) {
   auto memory_dumper = IndexFactory::CreateDumper("MemoryDumper");
   memory_dumper->init(ailego::Params());
@@ -326,7 +283,7 @@ int RabitqConverter::to_reformer(IndexReformer::Pointer *reformer) {
 
   auto res = std::make_shared<RabitqReformer>();
   ailego::Params reformer_params;
-  reformer_params.set(PARAM_RABITQ_REFORMER_METRIC_NAME, meta_.metric_name());
+  reformer_params.set(PARAM_RABITQ_METRIC_NAME, meta_.metric_name());
   ret = res->init(reformer_params);
   if (ret != 0) {
     LOG_ERROR("Failed to initialize RabitqReformer: %d", ret);
@@ -348,8 +305,7 @@ int RabitqConverter::to_reformer(IndexReformer::Pointer *reformer) {
   return 0;
 }
 
-INDEX_FACTORY_REGISTER_CONVERTER_ALIAS(RabitqConverter, RabitqConverter,
-                                       IndexMeta::DataType::DT_FP32);
+INDEX_FACTORY_REGISTER_CONVERTER_ALIAS(RabitqConverter, RabitqConverter);
 
 }  // namespace core
 }  // namespace zvec

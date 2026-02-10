@@ -68,23 +68,6 @@ constexpr node_id_t kInvalidNodeId = static_cast<node_id_t>(-1);
 constexpr key_t kInvalidKey = static_cast<key_t>(-1);
 class DistCalculator;
 
-struct RabitqConverterHeader {
-  uint32_t num_clusters;
-  uint32_t dim;
-  uint32_t padded_dim;
-  uint32_t rotator_size;
-  uint8_t ex_bits;
-  uint8_t rotator_type;
-  uint8_t padding[2];
-  uint32_t reserve[3];
-
-  RabitqConverterHeader() {
-    memset(this, 0, sizeof(RabitqConverterHeader));
-  }
-};
-static_assert(sizeof(RabitqConverterHeader) % 32 == 0,
-              "RabitqConverterHeader must be aligned with 32 bytes");
-
 struct GraphHeader {
   uint32_t size;
   uint32_t version;
