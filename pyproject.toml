@@ -182,6 +182,7 @@ exclude = [
     ".git/",
     ".venv/",
     "venv/",
+    "thirdparty",
 ]
 
 [tool.ruff.lint]
