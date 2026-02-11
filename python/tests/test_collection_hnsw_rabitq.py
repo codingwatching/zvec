@@ -13,9 +13,17 @@
 # limitations under the License.
 from __future__ import annotations
 
+import platform
+import sys
+
 import pytest
 import math
 import zvec
+
+pytestmark = pytest.mark.skipif(
+    not (sys.platform == "linux" and platform.machine() in ("x86_64", "AMD64")),
+    reason="HNSW RaBitQ only supported on Linux x86_64",
+)
 from zvec import (
     Collection,
     CollectionOption,
