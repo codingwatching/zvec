@@ -37,7 +37,9 @@
 #include <zvec/db/schema.h>
 #include <zvec/db/status.h>
 #include <zvec/db/type.h>
+#if RABITQ_SUPPORTED
 #include "core/algorithm/hnsw-rabitq/rabitq_params.h"
+#endif
 #include "db/common/constants.h"
 #include "db/common/file_helper.h"
 #include "db/common/global_resource.h"
@@ -1716,6 +1718,10 @@ Status SegmentImpl::create_vector_index(
       block.set_doc_count(meta()->doc_count());
       new_segment_meta->add_persisted_block(block);
     } else {
+#if !RABITQ_SUPPORTED
+      LOG_ERROR("RaBitQ is not supported on this platform (Linux x86_64 only)");
+      return Status::NotSupported("RabitQ is not supported on this platform");
+#else
       // rabitq
       auto rabitq_params = std::dynamic_pointer_cast<HnswRabitqIndexParams>(
           vector_index_params->clone());
@@ -1783,6 +1789,7 @@ Status SegmentImpl::create_vector_index(
       block.set_max_doc_id(meta()->max_doc_id());
       block.set_doc_count(meta()->doc_count());
       new_segment_meta->add_persisted_block(block);
+#endif
     }
 
     *segment_meta = new_segment_meta;

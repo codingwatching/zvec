@@ -20,8 +20,10 @@
 #include <zvec/ailego/container/params.h>
 #include <zvec/ailego/utility/time_helper.h>
 #include "algorithm/flat/flat_utility.h"
+#if RABITQ_SUPPORTED
 #include "algorithm/hnsw-rabitq/hnsw_rabitq_streamer.h"
 #include "algorithm/hnsw-rabitq/rabitq_converter.h"
+#endif
 #include "algorithm/hnsw/hnsw_params.h"
 #include "zvec/ailego/logger/logger.h"
 #include "zvec/core/framework/index_dumper.h"
@@ -121,6 +123,7 @@ int setup_hnsw_rabitq_streamer(const IndexStreamer::Pointer &streamer,
                                const IndexMeta &meta, YAML::Node &config_root,
                                const std::string &converter_name,
                                IndexHolder::Pointer *build_holder) {
+#if RABITQ_SUPPORTED
   RabitqConverter rabitq_converter;
   ailego::Params rabitq_converter_params;
   if (config_root["RabitqConverterParams"]) {
@@ -161,6 +164,10 @@ int setup_hnsw_rabitq_streamer(const IndexStreamer::Pointer &streamer,
   }
   hnsw_rabitq_streamer->set_provider(provider);
   return 0;
+#else
+  cerr << "HNSW RaBitQ is not supported on this platform" << endl;
+  return -1;
+#endif
 }
 
 bool check_config(YAML::Node &config_root) {
