@@ -158,24 +158,34 @@ jobs:
             # Wait for device to be ready
             adb wait-for-device
             
+            # Check file sizes before pushing
+            echo "Checking binary sizes:"
+            ls -lah examples/c++/build-android-examples-${{ matrix.abi }}/
+            
             # Push executables to device
             adb push examples/c++/build-android-examples-${{ matrix.abi }}/ailego-example /data/local/tmp/
             adb push examples/c++/build-android-examples-${{ matrix.abi }}/core-example /data/local/tmp/
             adb push examples/c++/build-android-examples-${{ matrix.abi }}/db-example /data/local/tmp/
             
             # Make executables executable
-            adb shell chmod +x /data/local/tmp/ailego-example
-            adb shell chmod +x /data/local/tmp/core-example
-            adb shell chmod +x /data/local/tmp/db-example
+            adb shell 'chmod 755 /data/local/tmp/ailego-example'
+            adb shell 'chmod 755 /data/local/tmp/core-example'
+            adb shell 'chmod 755 /data/local/tmp/db-example'
+            
+            # Verify file integrity
+            echo "File info on device:"
+            adb shell 'ls -la /data/local/tmp/ailego-example'
+            adb shell 'ls -la /data/local/tmp/core-example'
+            adb shell 'ls -la /data/local/tmp/db-example'
             
             echo "Running ailego example:"
-            adb shell 'cd /data/local/tmp/ && ./ailego-example'
+            adb shell 'cd /data/local/tmp && chmod +x ailego-example && ./ailego-example'
             echo "Exit code: $?"
             
             echo "Running core example:"
-            adb shell 'cd /data/local/tmp/ && ./core-example'
+            adb shell 'cd /data/local/tmp && chmod +x core-example && ./core-example'
             echo "Exit code: $?"
             
             echo "Running db example:"
-            adb shell 'cd /data/local/tmp/ && ./db-example'
+            adb shell 'cd /data/local/tmp && chmod +x db-example && ./db-example'
             echo "Exit code: $?"
