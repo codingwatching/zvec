@@ -31,9 +31,7 @@ cmake \
     -DANDROID_ABI="$ABI" \
     -DANDROID_NATIVE_API_LEVEL="$API_LEVEL" \
     -DCMAKE_BUILD_TYPE="$BUILD_TYPE" \
-    -DBUILD_PYTHON_BINDINGS=OFF \
-    -DBUILD_TOOLS=OFF \
-    -DCMAKE_INSTALL_PREFIX="./install" \
+    -DHOST_BUILD_DIR="build_android_${ABI}" \
     ../
 
 echo "building..."

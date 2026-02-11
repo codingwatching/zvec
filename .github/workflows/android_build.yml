@@ -77,3 +77,49 @@ jobs:
         shell: bash
         run: |
           cmake --build build-android-${{ matrix.abi }} --parallel
+
+      - name: Build examples
+        shell: bash
+        run: |
+          cd examples/c++
+          
+          cmake -S . -B  build-android-examples-${{ matrix.abi }} -D Ninja \
+            -DCMAKE_TOOLCHAIN_FILE="$ANDROID_NDK_HOME/build/cmake/android.toolchain.cmake" \
+            -DANDROID_ABI=${{ matrix.abi }} \
+            -DANDROID_PLATFORM=android-${{ matrix.api }} \
+            -DANDROID_STL=c++_shared \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DHOST_BUILD_DIR="build-android-${{ matrix.abi }}" \
+          
+          cmake --build build-android-examples-${{ matrix.abi }} --parallel
+
+      - name: Install ADB and setup Android emulator
+        uses: reactivecircus/android-emulator-runner@v2
+        with:
+          api-level: ${{ matrix.api }}
+          abi: ${{ matrix.abi }}
+          script: |
+            # Wait for device to be ready
+            adb wait-for-device
+            
+            # Push executables to device
+            adb push examples/c++/build-android-examples-${{ matrix.abi }}/ailego-example /data/local/tmp/
+            adb push examples/c++/build-android-examples-${{ matrix.abi }}/core-example /data/local/tmp/
+            adb push examples/c++/build-android-examples-${{ matrix.abi }}/db-example /data/local/tmp/
+            
+            # Make executables executable
+            adb shell chmod +x /data/local/tmp/ailego-example
+            adb shell chmod +x /data/local/tmp/core-example
+            adb shell chmod +x /data/local/tmp/db-example
+            
+            echo "Running ailego example:"
+            adb shell 'cd /data/local/tmp/ && ./ailego-example'
+            echo "Exit code: $?"
+            
+            echo "Running core example:"
+            adb shell 'cd /data/local/tmp/ && ./core-example'
+            echo "Exit code: $?"
+            
+            echo "Running db example:"
+            adb shell 'cd /data/local/tmp/ && ./db-example'
+            echo "Exit code: $?"

@@ -40,7 +40,7 @@ if [ -z "$ANDROID_NDK_HOME" ]; then
     exit 1
 fi
 
-BUILD_DIR="build_android_${ABI}_macos"
+BUILD_DIR="build_android_${ABI}"
 mkdir -p $BUILD_DIR
 cd $BUILD_DIR
 

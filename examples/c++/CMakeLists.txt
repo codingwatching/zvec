@@ -7,9 +7,14 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
 # --- Paths to Zvec and dependencies ---
+# Allow custom host build directory, default to "build"
+if(NOT DEFINED HOST_BUILD_DIR)
+    set(HOST_BUILD_DIR "build")
+endif()
+
 set(ZVEC_INCLUDE_DIR ${CMAKE_BINARY_DIR}/../../../src/include)
-set(ZVEC_LIB_DIR ${CMAKE_BINARY_DIR}/../../../build/lib)
-set(ZVEC_DEPENDENCY_LIB_DIR ${CMAKE_BINARY_DIR}/../../../build/external/usr/local/lib)
+set(ZVEC_LIB_DIR ${CMAKE_BINARY_DIR}/../../../${HOST_BUILD_DIR}/lib)
+set(ZVEC_DEPENDENCY_LIB_DIR ${CMAKE_BINARY_DIR}/../../../${HOST_BUILD_DIR}/external/usr/local/lib)
 
 # Add include and library search paths
 include_directories(${ZVEC_INCLUDE_DIR})
