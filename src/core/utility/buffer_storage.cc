@@ -13,7 +13,7 @@
 // limitations under the License.
 
 #include <mutex>
-// #include <zvec/ailego/buffer/buffer_manager.h>
+#include <algorithm>
 #include <zvec/ailego/buffer/buffer_pool.h>
 #include <zvec/ailego/utility/time_helper.h>
 #include <zvec/core/framework/index_error.h>
@@ -476,7 +476,7 @@ class BufferStorage : public IndexStorage {
   IndexFormat::MetaFooter footer_;
   std::map<std::string, IndexMapping::SegmentInfo> segments_{};
   std::map<std::string, size_t> id_hash_{};
-  size_t max_segment_size_{0};
+  uint64_t max_segment_size_{0};
   std::unique_ptr<char[]> segment_buffer_{nullptr};
 
   ailego::VecBufferPool::Pointer buffer_pool_{nullptr};
