@@ -155,3 +155,24 @@ add_executable(ailego-example ailego/main.cc)
 target_link_libraries(ailego-example PRIVATE
     zvec-ailego
 )
+
+# Strip symbols to reduce executable size
+if(CMAKE_BUILD_TYPE STREQUAL "Release" OR ANDROID)
+    add_custom_command(TARGET db-example POST_BUILD
+        COMMAND ${CMAKE_STRIP} "$<TARGET_FILE:db-example>"
+        COMMENT "Stripping symbols from db-example")
+    add_custom_command(TARGET core-example POST_BUILD
+        COMMAND ${CMAKE_STRIP} "$<TARGET_FILE:core-example>"
+        COMMENT "Stripping symbols from core-example")
+    add_custom_command(TARGET ailego-example POST_BUILD
+        COMMAND ${CMAKE_STRIP} "$<TARGET_FILE:ailego-example>"
+        COMMENT "Stripping symbols from ailego-example")
+endif()
+
+# Optimize for size
+if(CMAKE_BUILD_TYPE STREQUAL "Release" OR ANDROID)
+    set_property(TARGET db-example core-example ailego-example
+                 PROPERTY COMPILE_FLAGS "-Os")
+    set_property(TARGET db-example core-example ailego-example
+                 PROPERTY INTERPROCEDURAL_OPTIMIZATION TRUE)
+endif()
