@@ -162,15 +162,33 @@ jobs:
             echo "Checking binary sizes:"
             ls -lah examples/c++/build-android-examples-${{ matrix.abi }}/
             
+            # Check device architecture
+            echo "Device architecture info:"
+            adb shell getprop ro.product.cpu.abi
+            adb shell getprop ro.product.cpu.abilist
+            adb shell uname -m
+            
+            # Check binary architecture (requires file command)
+            echo "Checking if file command is available:"
+            if command -v file >/dev/null 2>&1; then
+                file examples/c++/build-android-examples-${{ matrix.abi }}/ailego-example
+                file examples/c++/build-android-examples-${{ matrix.abi }}/core-example
+                file examples/c++/build-android-examples-${{ matrix.abi }}/db-example
+            else
+                echo "file command not available on host"
+                # Check ELF header manually
+                hexdump -C examples/c++/build-android-examples-${{ matrix.abi }}/ailego-example | head -1
+            fi
+            
             # Push executables to device
             adb push examples/c++/build-android-examples-${{ matrix.abi }}/ailego-example /data/local/tmp/
             adb push examples/c++/build-android-examples-${{ matrix.abi }}/core-example /data/local/tmp/
             adb push examples/c++/build-android-examples-${{ matrix.abi }}/db-example /data/local/tmp/
             
             # Make executables executable
-            adb shell 'chmod 755 /data/local/tmp/ailego-example'
-            adb shell 'chmod 755 /data/local/tmp/core-example'
-            adb shell 'chmod 755 /data/local/tmp/db-example'
+            adb shell 'chmod a+x /data/local/tmp/ailego-example'
+            adb shell 'chmod a+x /data/local/tmp/core-example'
+            adb shell 'chmod a+x /data/local/tmp/db-example'
             
             # Verify file integrity
             echo "File info on device:"
