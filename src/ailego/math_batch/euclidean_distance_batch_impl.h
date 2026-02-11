@@ -21,6 +21,12 @@
 #include <zvec/ailego/utility/type_helper.h>
 #include "distance_batch_math.h"
 
+#define SSD_FP32_GENERAL(m, q, sum) \
+  {                                 \
+    float x = m - q;                \
+    sum += (x * x);                 \
+  }
+
 namespace zvec::ailego::DistanceBatch {
 
 template <typename ValueType, size_t BatchSize>

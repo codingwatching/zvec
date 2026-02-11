@@ -19,6 +19,12 @@
 #include <zvec/ailego/internal/platform.h>
 #include <zvec/ailego/utility/type_helper.h>
 
+#define SSD_INT8_GENERAL(m, q, sum)   \
+  {                                   \
+    int32_t x = m - q;                \
+    sum += static_cast<float>(x * x); \
+  }
+
 namespace zvec::ailego::DistanceBatch {
 
 #if defined(__AVX2__)
@@ -46,43 +52,88 @@ compute_one_to_many_squared_euclidean_avx2_int8(
         ailego_prefetch(prefetch_ptrs[i] + dim);
       }
     }
-    __m256i q_lo = _mm256_cvtepi8_epi16(_mm256_castsi256_si128(q));
-    __m256i q_hi = _mm256_cvtepi8_epi16(_mm256_extracti128_si256(q, 1));
-    __m256i data_lo[dp_batch];
-    __m256i data_hi[dp_batch];
+  
     for (size_t i = 0; i < dp_batch; ++i) {
-      data_lo[i] = _mm256_cvtepi8_epi16(_mm256_castsi256_si128(data_regs[i]));
-      data_hi[i] =
-          _mm256_cvtepi8_epi16(_mm256_extracti128_si256(data_regs[i], 1));
-    }
-    __m256i prod_lo[dp_batch];
-    __m256i prod_hi[dp_batch];
-    for (size_t i = 0; i < dp_batch; ++i) {
-      prod_lo[i] = _mm256_madd_epi16(q_lo, data_lo[i]);
-      prod_hi[i] = _mm256_madd_epi16(q_hi, data_hi[i]);
-    }
-    for (size_t i = 0; i < dp_batch; ++i) {
-      accs[i] =
-          _mm256_add_epi32(accs[i], _mm256_add_epi32(prod_lo[i], prod_hi[i]));
+      __m256i data_diff = _mm256_sub_epi8(_mm256_max_epi8(q, data_regs[i]),
+                                _mm256_min_epi8(q, data_regs[i]));
+
+      __m256i diff0 = _mm256_cvtepu8_epi16(_mm256_castsi256_si128(data_diff));
+      __m256i diff1 = _mm256_cvtepu8_epi16(_mm256_extractf128_si256(data_diff, 1));
+      accs[i] = _mm256_add_epi32(_mm256_madd_epi16(diff0, diff0), accs[i]);
+      accs[i] = _mm256_add_epi32(_mm256_madd_epi16(diff1, diff1), accs[i]);
     }
   }
-  std::array<int, dp_batch> temp_results;
+
   for (size_t i = 0; i < dp_batch; ++i) {
-    __m128i lo = _mm256_castsi256_si128(accs[i]);
-    __m128i hi = _mm256_extracti128_si256(accs[i], 1);
-    __m128i sum128 = _mm_add_epi32(lo, hi);
-    sum128 = _mm_hadd_epi32(sum128, sum128);
-    sum128 = _mm_hadd_epi32(sum128, sum128);
-    temp_results[i] = _mm_cvtsi128_si32(sum128);
+    results[i] = HorizontalAdd_INT32_V256(accs[i]);
   }
-  for (; dim < dimensionality; ++dim) {
-    int8_t q = query[dim];
+
+  if (dimensionality >= dim + 16) {
     for (size_t i = 0; i < dp_batch; ++i) {
-      temp_results[i] += q * static_cast<int>(ptrs[i][dim]);
+      __m128i q = _mm_loadu_si128((const __m128i *)query + dim);
+      __m128i data_regs = _mm_loadu_si128((const __m128i *)(ptrs[i]+dim));
+
+      __m128i diff = _mm_sub_epi8(_mm_max_epi8(q, data_regs),
+                                    _mm_min_epi8(q, data_regs));
+
+      __m128i diff0 = _mm_cvtepu8_epi16(diff);
+      __m128i diff1 = _mm_cvtepu8_epi16(_mm_unpackhi_epi64(diff, diff));
+      __m128i sum = _mm_add_epi32(_mm_madd_epi16(diff0, diff0),
+                              _mm_madd_epi16(diff1, diff1));
+
+      results[i] += static_cast<float>(HorizontalAdd_INT32_V128(sum));
     }
+
+    dim += 16;
   }
+
   for (size_t i = 0; i < dp_batch; ++i) {
-    results[i] = static_cast<float>(temp_results[i]);
+    switch (dimensionality - dim) {
+      case 15:
+        SSD_INT8_GENERAL(query+dim, ptrs[14]+dim, results[i]);
+        /* FALLTHRU */
+      case 14:
+        SSD_INT8_GENERAL(query+dim, ptrs[13+dim], results[i]);
+        /* FALLTHRU */
+      case 13:
+        SSD_INT8_GENERAL(query+dim, ptrs[12]+dim, results[i]);
+        /* FALLTHRU */
+      case 12:
+        SSD_INT8_GENERAL(query+dim, ptrs[11]+dim, results[i]);
+        /* FALLTHRU */
+      case 11:
+        SSD_INT8_GENERAL(query+dim, ptrs[10+dim], results[i]);
+        /* FALLTHRU */
+      case 10:
+        SSD_INT8_GENERAL(query+dim, ptrs[9]+dim, results[i]);
+        /* FALLTHRU */
+      case 9:
+        SSD_INT8_GENERAL(query+dim, ptrs[8]+dim, results[i]);
+        /* FALLTHRU */
+      case 8:
+        SSD_INT8_GENERAL(query+dim, ptrs[7]+dim, results[i]);
+        /* FALLTHRU */
+      case 7:
+        SSD_INT8_GENERAL(query+dim, ptrs[6]+dim, results[i]);
+        /* FALLTHRU */
+      case 6:
+        SSD_INT8_GENERAL(query+dim, ptrs[5]+dim, results[i]);
+        /* FALLTHRU */
+      case 5:
+        SSD_INT8_GENERAL(query+dim, ptrs[4]+dim, results[i]);
+        /* FALLTHRU */
+      case 4:
+        SSD_INT8_GENERAL(query+dim, ptrs[3]+dim, results[i]);
+        /* FALLTHRU */
+      case 3:
+        SSD_INT8_GENERAL(query+dim, ptrs[2]+dim, results[i]);
+        /* FALLTHRU */
+      case 2:
+        SSD_INT8_GENERAL(query+dim, ptrs[1]+dim, results[i]);
+        /* FALLTHRU */
+      case 1:
+        SSD_INT8_GENERAL(query+dim, ptrs[0]+dim, results[i]);
+    }
   }
 }
 
