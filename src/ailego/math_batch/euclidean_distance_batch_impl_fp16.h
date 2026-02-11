@@ -26,7 +26,7 @@ namespace zvec::ailego::DistanceBatch {
 
 template <typename ValueType, size_t dp_batch>
 static std::enable_if_t<std::is_same_v<ValueType, ailego::Float16>, void>
-compute_one_to_many_inner_product_avx512fp16_fp16(
+compute_one_to_many_squared_euclidean_avx512fp16_fp16(
     const ailego::Float16 *query, const ailego::Float16 **ptrs,
     std::array<const ailego::Float16 *, dp_batch> &prefetch_ptrs,
     size_t dimensionality, float *results) {
@@ -52,7 +52,8 @@ compute_one_to_many_inner_product_avx512fp16_fp16(
     }
 
     for (size_t i = 0; i < dp_batch; ++i) {
-      accs[i] = _mm512_fmadd_ph(data_regs[i], q, accs[i]);
+      __m512h diff = _mm512_sub_ph(data_regs[i], q);
+      accs[i] = _mm512_fmadd_ph(diff, diff, accs[i]);
     }
   }
 
@@ -61,13 +62,13 @@ compute_one_to_many_inner_product_avx512fp16_fp16(
 
     for (size_t i = 0; i < dp_batch; ++i) {
       __m512i zmm_undefined = _mm512_undefined_epi32();
+      __m512h zmm_undefined_ph = _mm512_undefined_ph();
+      __m512h zmm_d = _mm512_mask_sub_ph(
+        zmm_undefined_ph, mask,
+        _mm512_castsi512_ph(_mm512_mask_loadu_epi16(zmm_undefined, mask, query + dim)),
+        _mm512_castsi512_ph(_mm512_mask_loadu_epi16(zmm_undefined, mask, ptrs[i] + dim)));
 
-      accs[i] =
-          _mm512_mask3_fmadd_ph(_mm512_castsi512_ph(_mm512_mask_loadu_epi16(
-                                    zmm_undefined, mask, query + dim)),
-                                _mm512_castsi512_ph(_mm512_mask_loadu_epi16(
-                                    zmm_undefined, mask, ptrs[i] + dim)),
-                                accs[i], mask);
+      accs[i] = _mm512_mask3_fmadd_ph(zmm_d, zmm_d, accs[i], mask);
     }
   }
 
@@ -82,7 +83,7 @@ compute_one_to_many_inner_product_avx512fp16_fp16(
 
 template <typename ValueType, size_t dp_batch>
 static std::enable_if_t<std::is_same_v<ValueType, ailego::Float16>, void>
-compute_one_to_many_inner_product_avx512f_fp16(
+compute_one_to_many_squared_euclidean_avx512f_fp16(
     const ailego::Float16 *query, const ailego::Float16 **ptrs,
     std::array<const ailego::Float16 *, dp_batch> &prefetch_ptrs,
     size_t dimensionality, float *results) {
@@ -117,8 +118,11 @@ compute_one_to_many_inner_product_avx512f_fp16(
     }
 
     for (size_t i = 0; i < dp_batch; ++i) {
-      accs[i] = _mm512_fmadd_ps(q1, data_regs_1[i], accs[i]);
-      accs[i] = _mm512_fmadd_ps(q2, data_regs_2[i], accs[i]);
+      __m512 diff1  = _mm512_sub_ps(q1, data_regs_1[i]);
+      accs[i] = _mm512_fmadd_ps(diff1, diff1, accs[i]);
+
+      __m512 diff2  = _mm512_sub_ps(q2, data_regs_2[i]);
+      accs[i] = _mm512_fmadd_ps(diff2,diff2, accs[i]);
     }
   }
 
@@ -150,7 +154,9 @@ compute_one_to_many_inner_product_avx512f_fp16(
     for (size_t i = 0; i < dp_batch; ++i) {
       __m256 m = _mm256_cvtph_ps(
           _mm_loadu_si128(reinterpret_cast<const __m128i *>(ptrs[i] + dim)));
-      acc_new[i] = _mm256_fmadd_ps(m, q, acc_new[i]);
+
+      __m256 diff = _mm256_sub_ps(m, q);
+      acc_new[i] = _mm256_fmadd_ps(diff, diff, acc_new[i]);
     }
 
     dim += 8;
@@ -162,7 +168,8 @@ compute_one_to_many_inner_product_avx512f_fp16(
 
   for (; dim < dimensionality; ++dim) {
     for (size_t i = 0; i < dp_batch; ++i) {
-      results[i] += (*(query + dim)) * (*(ptrs[i] + dim));
+      float diff = (*(query + dim)) - (*(ptrs[i] + dim));
+      results[i] += diff * diff;
     }
   }
 }
@@ -172,7 +179,7 @@ compute_one_to_many_inner_product_avx512f_fp16(
 
 template <typename ValueType, size_t dp_batch>
 static std::enable_if_t<std::is_same_v<ValueType, ailego::Float16>, void>
-compute_one_to_many_inner_product_avx2_fp16(
+compute_one_to_many_squared_euclidean_avx2_fp16(
     const ailego::Float16 *query, const ailego::Float16 **ptrs,
     std::array<const ailego::Float16 *, dp_batch> &prefetch_ptrs,
     size_t dimensionality, float *results) {
@@ -207,8 +214,11 @@ compute_one_to_many_inner_product_avx2_fp16(
     }
 
     for (size_t i = 0; i < dp_batch; ++i) {
-      accs[i] = _mm256_fmadd_ps(q1, data_regs_1[i], accs[i]);
-      accs[i] = _mm256_fmadd_ps(q2, data_regs_2[i], accs[i]);
+      __m256 diff1 = _mm256_sub_ps(q1, data_regs_1[i]);
+      accs[i] = _mm256_fmadd_ps(diff1, diff1, accs[i]);
+
+      __m256 diff2 = _mm256_sub_ps(q1, data_regs_2[i]);
+      accs[i] = _mm256_fmadd_ps(diff2, diff2, accs[i]);
     }
   }
 
@@ -220,7 +230,9 @@ compute_one_to_many_inner_product_avx2_fp16(
     for (size_t i = 0; i < dp_batch; ++i) {
       data_regs[i] = _mm256_cvtph_ps(
           _mm_loadu_si128(reinterpret_cast<const __m128i *>(ptrs[i] + dim)));
-      accs[i] = _mm256_fmadd_ps(q, data_regs[i], accs[i]);
+
+      __m256 diff = _mm256_sub_ps(q, data_regs[i]);
+      accs[i] = _mm256_fmadd_ps(diff, diff, accs[i]);
     }
 
     dim += 8;
@@ -232,7 +244,8 @@ compute_one_to_many_inner_product_avx2_fp16(
 
   for (; dim < dimensionality; ++dim) {
     for (size_t i = 0; i < dp_batch; ++i) {
-      results[i] += (*(query + dim)) * (*(ptrs[i] + dim));
+      float diff = (*(query + dim)) - (*(ptrs[i] + dim));
+      results[i] += diff * diff;
     }
   }
 }

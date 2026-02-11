@@ -19,11 +19,12 @@
 #include <ailego/utility/math_helper.h>
 #include <zvec/ailego/internal/platform.h>
 #include <zvec/ailego/utility/type_helper.h>
+#include "distance_batch_math.h"
 
 namespace zvec::ailego::DistanceBatch {
 
 template <typename ValueType, size_t BatchSize>
-static void compute_one_to_many_fallback(
+static void compute_one_to_many_inner_product_fallback(
     const ValueType *query, const ValueType **ptrs,
     std::array<const ValueType *, BatchSize> &prefetch_ptrs, size_t dim,
     float *sums) {
@@ -36,20 +37,9 @@ static void compute_one_to_many_fallback(
 
 #if defined(__AVX2__)
 
-inline float sum4(__m128 v) {
-  v = _mm_add_ps(v, _mm_castsi128_ps(_mm_srli_si128(_mm_castps_si128(v), 8)));
-  return v[0] + v[1];
-}
-
-inline __m128 sum_top_bottom_avx(__m256 v) {
-  const __m128 high = _mm256_extractf128_ps(v, 1);
-  const __m128 low = _mm256_castps256_ps128(v);
-  return _mm_add_ps(high, low);
-}
-
 template <typename ValueType, size_t dp_batch>
 static std::enable_if_t<std::is_same_v<ValueType, float>, void>
-compute_one_to_many_avx2_fp32(
+compute_one_to_many_inner_product_avx2_fp32(
     const ValueType *query, const ValueType **ptrs,
     std::array<const ValueType *, dp_batch> &prefetch_ptrs,
     size_t dimensionality, float *results) {
