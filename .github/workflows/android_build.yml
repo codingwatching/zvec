@@ -31,7 +31,7 @@ jobs:
         with:
           path: |
             ~/.ccache
-          key: ${{ runner.os }}-dependencies-cache-${{ hashFiles('**/CMakeLists.txt', 'thirdparty/**') }}
+          key: ${{ runner.os }}-dependencies-cache-${{ hashFiles('**/CMakeLists.txt', 'thirdparty/**') }}-stl-fix
           restore-keys: |
             ${{ runner.os }}-dependencies-cache-
 
@@ -61,7 +61,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: build-host
-          key: ${{ runner.os }}-host-protoc-${{ hashFiles('src/**', 'CMakeLists.txt') }}
+          key: ${{ runner.os }}-host-protoc-${{ hashFiles('src/**', 'CMakeLists.txt') }}-stl-fix
           restore-keys: |
             ${{ runner.os }}-host-protoc-
 
@@ -87,7 +87,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: build-android-${{ matrix.abi }}
-          key: ${{ runner.os }}-android-build-${{ matrix.abi }}-${{ hashFiles('src/**', 'CMakeLists.txt', 'cmake/**') }}
+          key: ${{ runner.os }}-android-build-${{ matrix.abi }}-${{ hashFiles('src/**', 'CMakeLists.txt', 'cmake/**') }}-stl-fix
           restore-keys: |
             ${{ runner.os }}-android-build-${{ matrix.abi }}-
 
@@ -126,7 +126,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: examples/c++/build-android-examples-${{ matrix.abi }}
-          key: ${{ runner.os }}-examples-build-${{ matrix.abi }}-${{ hashFiles('examples/c++/**', 'CMakeLists.txt', 'src/**') }}
+          key: ${{ runner.os }}-examples-build-${{ matrix.abi }}-${{ hashFiles('examples/c++/**', 'CMakeLists.txt', 'src/**') }}-stl-fix
           restore-keys: |
             ${{ runner.os }}-examples-build-${{ matrix.abi }}-
 
