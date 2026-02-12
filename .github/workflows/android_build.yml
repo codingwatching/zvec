@@ -153,7 +153,10 @@ jobs:
         uses: reactivecircus/android-emulator-runner@v2
         with:
           api-level: ${{ matrix.api }}
-          abi: ${{ matrix.abi }}
+          arch: ${{ matrix.abi }}
+          target: google_apis
+          emulator-options: -no-window -gpu swiftshader_indirect -noaudio -no-boot-anim
+          disable-animations: true
           script: |
             # Wait for device to be ready
             adb wait-for-device
@@ -164,21 +167,8 @@ jobs:
             
             # Check device architecture
             echo "Device architecture info:"
-            adb shell getprop ro.product.cpu.abi
-            adb shell getprop ro.product.cpu.abilist
-            adb shell uname -m
-            
-            # Check binary architecture (requires file command)
-            echo "Checking if file command is available:"
-            if command -v file >/dev/null 2>&1; then
-                file examples/c++/build-android-examples-${{ matrix.abi }}/ailego-example
-                file examples/c++/build-android-examples-${{ matrix.abi }}/core-example
-                file examples/c++/build-android-examples-${{ matrix.abi }}/db-example
-            else
-                echo "file command not available on host"
-                # Check ELF header manually
-                hexdump -C examples/c++/build-android-examples-${{ matrix.abi }}/ailego-example | head -1
-            fi
+            adb shell 'getprop ro.product.cpu.abi'
+            adb shell 'getprop ro.product.cpu.abilist'
             
             # Push executables to device
             adb push examples/c++/build-android-examples-${{ matrix.abi }}/ailego-example /data/local/tmp/
