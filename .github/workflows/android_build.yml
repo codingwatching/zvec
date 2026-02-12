@@ -87,9 +87,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: build-android-${{ matrix.abi }}
-          key: ${{ runner.os }}-android-build-${{ matrix.abi }}-${{ hashFiles('src/**', 'CMakeLists.txt', 'cmake/**') }}-stl-fix
-          restore-keys: |
-            ${{ runner.os }}-android-build-${{ matrix.abi }}-
+          key: ${{ runner.os }}-android-build-${{ matrix.abi }}-${{ hashFiles('src/**', 'CMakeLists.txt', 'cmake/**', 'thirdparty/**') }}-stl-fix-2
 
       - name: Configure and Build
         shell: bash
@@ -126,9 +124,7 @@ jobs:
         uses: actions/cache@v3
         with:
           path: examples/c++/build-android-examples-${{ matrix.abi }}
-          key: ${{ runner.os }}-examples-build-${{ matrix.abi }}-${{ hashFiles('examples/c++/**', 'CMakeLists.txt', 'src/**') }}-stl-fix
-          restore-keys: |
-            ${{ runner.os }}-examples-build-${{ matrix.abi }}-
+          key: ${{ runner.os }}-examples-build-${{ matrix.abi }}-${{ hashFiles('examples/c++/**', 'CMakeLists.txt', 'src/**') }}-stl-fix-2
 
       - name: Build examples
         shell: bash
