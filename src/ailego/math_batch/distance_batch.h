@@ -43,6 +43,20 @@ struct BaseDistance {
                                                             out);
     }
 
+    if constexpr (std::is_same_v<DistanceType<ValueType, 1, 1>,
+                                 EuclideanDistanceMatrix<ValueType, 1, 1>>) {
+      return DistanceBatch::EuclideanDistanceBatch<
+          ValueType, BatchSize, PrefetchStep>::ComputeBatch(m, q, num, dim,
+                                                            out);
+    }
+
+    if constexpr (std::is_same_v<DistanceType<ValueType, 1, 1>,
+                                 SquaredEuclideanDistanceMatrix<ValueType, 1, 1>>) {
+      return DistanceBatch::SquaredEuclideanDistanceBatch<
+          ValueType, BatchSize, PrefetchStep>::ComputeBatch(m, q, num, dim,
+                                                            out);
+    }
+
     _ComputeBatch(m, q, num, dim, out);
   }
 };

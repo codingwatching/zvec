@@ -124,7 +124,7 @@ compute_one_to_many_squared_euclidean_avx2_fp32(
   }
 
   for (size_t i = 0; i < dp_batch; ++i) {
-    results[i] = HorizontalAdd_FP32_V256(_mm256_add_ps(accs[i]));
+    results[i] = HorizontalAdd_FP32_V256(accs[i]);
 
     switch (dimensionality - dim) {
       case 7:

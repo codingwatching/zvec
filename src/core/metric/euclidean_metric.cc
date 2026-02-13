@@ -853,18 +853,6 @@ class SquaredEuclideanMetric : public IndexMetric {
   //! Retrieve distance function for query
   MatrixBatchDistance batch_distance(void) const override {
     switch (data_type_) {
-      case IndexMeta::DataType::DT_BINARY32:
-        return reinterpret_cast<IndexMetric::MatrixBatchDistanceHandle>(
-            ailego::BaseDistance<ailego::HammingDistanceMatrix, uint32_t, 1,
-                                 1>::ComputeBatch);
-
-#if defined(AILEGO_M64)
-      case IndexMeta::DataType::DT_BINARY64:
-        return reinterpret_cast<IndexMetric::MatrixBatchDistanceHandle>(
-            ailego::BaseDistance<ailego::HammingDistanceMatrix, uint64_t, 1,
-                                 1>::ComputeBatch);
-#endif  // AILEGO_M64
-
       case IndexMeta::DataType::DT_FP16:
         return reinterpret_cast<IndexMetric::MatrixBatchDistanceHandle>(
             ailego::BaseDistance<ailego::SquaredEuclideanDistanceMatrix,

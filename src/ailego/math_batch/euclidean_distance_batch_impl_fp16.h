@@ -217,7 +217,7 @@ compute_one_to_many_squared_euclidean_avx2_fp16(
       __m256 diff1 = _mm256_sub_ps(q1, data_regs_1[i]);
       accs[i] = _mm256_fmadd_ps(diff1, diff1, accs[i]);
 
-      __m256 diff2 = _mm256_sub_ps(q1, data_regs_2[i]);
+      __m256 diff2 = _mm256_sub_ps(q2, data_regs_2[i]);
       accs[i] = _mm256_fmadd_ps(diff2, diff2, accs[i]);
     }
   }
