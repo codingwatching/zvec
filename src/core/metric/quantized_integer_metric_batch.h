@@ -24,13 +24,16 @@ template <typename T, size_t BatchSize, size_t PrefetchStep>
 struct MinusInnerProductDistanceBatchWithScoreUnquantized;
 
 template <typename T, size_t BatchSize, size_t PrefetchStep>
-struct CosineMinusInnerProductDistanceBatchWithScoreUnquantized;
+struct CosineDistanceBatchWithScoreUnquantized;
 
 template <typename T, size_t BatchSize, size_t PrefetchStep>
 struct SquaredEuclideanDistanceBatchWithScoreUnquantized;
 
 template <typename T, size_t BatchSize, size_t PrefetchStep>
 struct MipsSquaredEuclideanDistanceBatchWithScoreUnquantized;
+
+template <typename T, size_t BatchSize, size_t PrefetchStep>
+struct InternalMinusInnerProductDistanceBatchWithScoreUnquantized;
 
 
 template <template <typename, size_t, size_t> class DistanceType,
@@ -52,7 +55,13 @@ struct BaseDistanceBatchWithScoreUnquantized {
     // }
     if constexpr (std::is_same_v<DistanceType<ValueType, 1, 1>,
                                  CosineMinusInnerProduct<ValueType, 1, 1>>) {
-      return CosineMinusInnerProductDistanceBatchWithScoreUnquantized<
+      return CosineDistanceBatchWithScoreUnquantized<
+          ValueType, BatchSize, PrefetchStep>::ComputeBatch(m, q, num, dim,
+                                                            out);
+    }
+    if constexpr (std::is_same_v<DistanceType<ValueType, 1, 1>,
+                                 MinusInnerProduct<ValueType, 1, 1>>) {
+      return MinusInnerProductDistanceBatchWithScoreUnquantized<
           ValueType, BatchSize, PrefetchStep>::ComputeBatch(m, q, num, dim,
                                                             out);
     }
@@ -62,16 +71,15 @@ struct BaseDistanceBatchWithScoreUnquantized {
 };
 
 //===========================================================
-// CosineMinusInnerProductDistanceBatchWithScoreUnquantized
+// CosineDistanceBatchWithScoreUnquantized
 //===========================================================
 
 // Compute CosineMinusInnerProduct for quantized INT8
 template <size_t BatchSize, size_t PrefetchStep>
-struct CosineMinusInnerProductDistanceBatchWithScoreUnquantized<
-    int8_t, BatchSize, PrefetchStep> {
-  using ImplType =
-      MinusInnerProductDistanceBatchWithScoreUnquantized<int8_t, BatchSize,
-                                                         PrefetchStep>;
+struct CosineDistanceBatchWithScoreUnquantized<int8_t, BatchSize,
+                                               PrefetchStep> {
+  using ImplType = InternalMinusInnerProductDistanceBatchWithScoreUnquantized<
+      int8_t, BatchSize, PrefetchStep>;
 
   static inline void ComputeBatch(const int8_t **vecs, const int8_t *query,
                                   size_t num_vecs, size_t dim, float *results) {
@@ -94,25 +102,25 @@ struct CosineMinusInnerProductDistanceBatchWithScoreUnquantized<
 
 // Compute CosineMinusInnerProduct for quantized INT4
 template <size_t BatchSize, size_t PrefetchStep>
-struct CosineMinusInnerProductDistanceBatchWithScoreUnquantized<
-    uint8_t, BatchSize, PrefetchStep> {
+struct CosineDistanceBatchWithScoreUnquantized<uint8_t, BatchSize,
+                                               PrefetchStep> {
   static inline void ComputeBatch(const uint8_t **vecs, const uint8_t *query,
                                   size_t num_vecs, size_t dim, float *results) {
     size_t original_dim = dim - 40;
-    MinusInnerProductDistanceBatchWithScoreUnquantized<
+    InternalMinusInnerProductDistanceBatchWithScoreUnquantized<
         uint8_t, BatchSize, PrefetchStep>::ComputeBatch(vecs, query, num_vecs,
                                                         original_dim, results);
   }
 };
 
 //===========================================================
-// MinusInnerProductDistanceBatchWithScoreUnquantized
+// InternalMinusInnerProductDistanceBatchWithScoreUnquantized
 //===========================================================
 
 // Compute MinusInnerProduct for quantized INT8
 template <size_t BatchSize, size_t PrefetchStep>
-struct MinusInnerProductDistanceBatchWithScoreUnquantized<int8_t, BatchSize,
-                                                          PrefetchStep> {
+struct InternalMinusInnerProductDistanceBatchWithScoreUnquantized<
+    int8_t, BatchSize, PrefetchStep> {
   using ImplType =
       ailego::DistanceBatch::InnerProductDistanceBatch<int8_t, BatchSize,
                                                        PrefetchStep>;
@@ -150,8 +158,8 @@ struct MinusInnerProductDistanceBatchWithScoreUnquantized<int8_t, BatchSize,
 
 // Compute MinusInnerProduct for quantized INT4
 template <size_t BatchSize, size_t PrefetchStep>
-struct MinusInnerProductDistanceBatchWithScoreUnquantized<uint8_t, BatchSize,
-                                                          PrefetchStep> {
+struct InternalMinusInnerProductDistanceBatchWithScoreUnquantized<
+    uint8_t, BatchSize, PrefetchStep> {
   static inline void ComputeBatch(const uint8_t **vecs, const uint8_t *query,
                                   size_t num_vecs, size_t dim, float *results) {
     const size_t original_dim = dim;
@@ -175,6 +183,62 @@ struct MinusInnerProductDistanceBatchWithScoreUnquantized<uint8_t, BatchSize,
       float &result = results[i];
       result = -(ma * qa * result + mb * qa * qs + qb * ma * ms +
                  original_dim * qb * mb);
+    }
+  }
+};
+
+//===========================================================
+// MinusInnerProductDistanceBatchWithScoreUnquantized
+//===========================================================
+
+template <size_t BatchSize, size_t PrefetchStep>
+struct MinusInnerProductDistanceBatchWithScoreUnquantized<int8_t, BatchSize,
+                                                          PrefetchStep> {
+  using ImplType = InternalMinusInnerProductDistanceBatchWithScoreUnquantized<
+      int8_t, BatchSize, PrefetchStep>;
+  static inline void ComputeBatch(const int8_t **vecs, const int8_t *query,
+                                  size_t num_vecs, size_t dim, float *results) {
+    const size_t original_dim = dim - 16;
+    ImplType::ComputeBatch(vecs, query, num_vecs, original_dim, results);
+  }
+
+  static ailego::DistanceBatch::DistanceBatchQueryPreprocessFunc
+  GetQueryPreprocessFunc() {
+    return QueryPreprocess;
+  }
+
+  static void QueryPreprocess(void *query, size_t dim) {
+    if (auto func = ImplType::GetQueryPreprocessFunc(); func != nullptr) {
+      return func(query, dim - 16);
+    }
+  }
+};
+
+
+template <size_t BatchSize, size_t PrefetchStep>
+struct MinusInnerProductDistanceBatchWithScoreUnquantized<uint8_t, BatchSize,
+                                                          PrefetchStep> {
+  static inline void ComputeBatch(const uint8_t **vecs, const uint8_t *query,
+                                  size_t num_vecs, size_t dim, float *results) {
+    const size_t original_dim = dim - 32;
+    const size_t d = original_dim;
+    const size_t p = d >> 1;
+    ailego::DistanceBatch::InnerProductDistanceBatch<
+        uint8_t, BatchSize, PrefetchStep>::ComputeBatch(vecs, query, num_vecs,
+                                                        original_dim, results);
+    const float *q_tail = reinterpret_cast<const float *>(
+        reinterpret_cast<const uint8_t *>(query) + p);
+    float qa = q_tail[0];
+    float qb = q_tail[1];
+    float qs = q_tail[2];
+    for (size_t i = 0; i < num_vecs; ++i) {
+      const float *m_tail = reinterpret_cast<const float *>(
+          reinterpret_cast<const uint8_t *>(vecs[i]) + p);
+      float ma = m_tail[0];
+      float mb = m_tail[1];
+      float ms = m_tail[2];
+      float &result = results[i];
+      result = -(ma * qa * result + mb * qa * qs + qb * ma * ms + d * qb * mb);
     }
   }
 };

@@ -43,6 +43,12 @@ struct BaseDistance {
           ValueType, BatchSize, PrefetchStep>::ComputeBatch(m, q, num, dim,
                                                             out);
     }
+    if constexpr (std::is_same_v<DistanceType<ValueType, 1, 1>,
+                                 MinusInnerProductMatrix<ValueType, 1, 1>>) {
+      return DistanceBatch::MinusInnerProductDistanceBatch<
+          ValueType, BatchSize, PrefetchStep>::ComputeBatch(m, q, num, dim,
+                                                            out);
+    }
 
     _ComputeBatch(m, q, num, dim, out);
   }

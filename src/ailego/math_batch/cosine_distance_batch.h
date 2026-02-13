@@ -27,6 +27,10 @@ namespace zvec::ailego::DistanceBatch {
 template <typename T, size_t BatchSize, size_t PrefetchStep, typename = void>
 struct CosineDistanceBatch;
 
+template <typename T, size_t BatchSize, size_t PrefetchStep, typename = void>
+struct MinusInnerProductDistanceBatch;
+
+
 template <typename T, size_t BatchSize, size_t PrefetchStep, typename>
 struct CosineDistanceBatch {
   using ValueType = typename std::remove_cv<T>::type;
@@ -51,6 +55,29 @@ struct CosineDistanceBatch {
   static void QueryPreprocess(void *query, size_t dim) {
     return IPImplType::QueryPreprocess(query,
                                        dim - sizeof(float) / sizeof(ValueType));
+  }
+};
+
+template <typename T, size_t BatchSize, size_t PrefetchStep, typename>
+struct MinusInnerProductDistanceBatch {
+  using ValueType = typename std::remove_cv<T>::type;
+
+  static inline void ComputeBatch(const ValueType **vecs,
+                                  const ValueType *query, size_t num_vecs,
+                                  size_t dim, float *results) {
+    InnerProductDistanceBatch<ValueType, BatchSize, PrefetchStep>::ComputeBatch(
+        vecs, query, num_vecs, dim, results);
+
+    for (size_t i = 0; i < num_vecs; ++i) {
+      results[i] = -results[i];
+    }
+  }
+
+  using IPImplType =
+      InnerProductDistanceBatch<ValueType, BatchSize, PrefetchStep>;
+
+  static void QueryPreprocess(void *query, size_t dim) {
+    return IPImplType::QueryPreprocess(query, dim);
   }
 };
 

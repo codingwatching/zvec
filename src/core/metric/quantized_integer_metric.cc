@@ -264,7 +264,11 @@ class QuantizedIntegerMetric : public IndexMetric {
       const override {
     if (origin_metric_type_ == MetricType::kCosine &&
         meta_.data_type() == IndexMeta::DataType::DT_INT8) {
-      return CosineMinusInnerProductDistanceBatchWithScoreUnquantized<
+      return CosineDistanceBatchWithScoreUnquantized<
+          int8_t, 1, 1>::GetQueryPreprocessFunc();
+    } else if (origin_metric_type_ == MetricType::kInnerProduct &&
+               meta_.data_type() == IndexMeta::DataType::DT_INT8) {
+      return MinusInnerProductDistanceBatchWithScoreUnquantized<
           int8_t, 1, 1>::GetQueryPreprocessFunc();
     }
 

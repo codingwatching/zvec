@@ -22,6 +22,7 @@
 #include <zvec/ailego/utility/type_helper.h>
 #include "inner_product_distance_batch_impl.h"
 #include "inner_product_distance_batch_impl_fp16.h"
+#include "inner_product_distance_batch_impl_int4.h"
 #include "inner_product_distance_batch_impl_int8.h"
 
 namespace zvec::ailego::DistanceBatch {
@@ -124,6 +125,23 @@ struct InnerProductDistanceBatchImpl<ailego::Float16, BatchSize> {
     if (zvec::ailego::internal::CpuFeatures::static_flags_.AVX2) {
       return compute_one_to_many_avx2_fp16<ValueType, BatchSize>(
           query, ptrs, prefetch_ptrs, dim, sums);
+    }
+#endif
+    return compute_one_to_many_fallback(query, ptrs, prefetch_ptrs, dim, sums);
+  }
+};
+
+template <size_t BatchSize>
+struct InnerProductDistanceBatchImpl<uint8_t, BatchSize> {
+  using ValueType = uint8_t;
+  static void compute_one_to_many(
+      const uint8_t *query, const uint8_t **ptrs,
+      std::array<const uint8_t *, BatchSize> &prefetch_ptrs, size_t dim,
+      float *sums) {
+#if defined(__AVX2__)
+    if (zvec::ailego::internal::CpuFeatures::static_flags_.AVX2) {
+      return compute_one_to_many_avx2_int4<BatchSize>(query, ptrs,
+                                                      prefetch_ptrs, dim, sums);
     }
 #endif
     return compute_one_to_many_fallback(query, ptrs, prefetch_ptrs, dim, sums);
