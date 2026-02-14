@@ -167,6 +167,70 @@ def generate_vectordict_recall(i: int, schema: CollectionSchema) -> Doc:
             raise ValueError(f"Unsupported vector type: {vector.data_type}")
     return doc_fields, doc_vectors
 
+def generate_vectordict_update(i: int, schema: CollectionSchema) -> Doc:
+    doc_fields = {}
+    doc_vectors = {}
+    doc_fields = {}
+    doc_vectors = {}
+    for field in schema.fields:
+        if field.data_type == DataType.BOOL:
+            doc_fields[field.name] = (i+1) % 2 == 0
+        elif field.data_type == DataType.INT32:
+            doc_fields[field.name] = i+1
+        elif field.data_type == DataType.UINT32:
+            doc_fields[field.name] = i+1
+        elif field.data_type == DataType.INT64:
+            doc_fields[field.name] = i+1
+        elif field.data_type == DataType.UINT64:
+            doc_fields[field.name] = i+1
+        elif field.data_type == DataType.FLOAT:
+            doc_fields[field.name] = float(i+1) + 0.1
+        elif field.data_type == DataType.DOUBLE:
+            doc_fields[field.name] = float(i+1) + 0.11
+        elif field.data_type == DataType.STRING:
+            doc_fields[field.name] = f"test_{i+1}"
+        elif field.data_type == DataType.ARRAY_BOOL:
+            doc_fields[field.name] = [(i+1) % 2 == 0, (i+1) % 3 == 0]
+        elif field.data_type == DataType.ARRAY_INT32:
+            doc_fields[field.name] = [i + 1, i + 1, i + 2]
+        elif field.data_type == DataType.ARRAY_UINT32:
+            doc_fields[field.name] = [i + 1, i + 1, i + 2]
+        elif field.data_type == DataType.ARRAY_INT64:
+            doc_fields[field.name] = [i + 1, i + 1, i + 2]
+        elif field.data_type == DataType.ARRAY_UINT64:
+            doc_fields[field.name] = [i + 1, i + 1, i + 2]
+        elif field.data_type == DataType.ARRAY_FLOAT:
+            doc_fields[field.name] = [float(i + 1.1), float(i + 2.1), float(i + 3.1)]
+        elif field.data_type == DataType.ARRAY_DOUBLE:
+            doc_fields[field.name] = [float(i + 1.11), float(i + 2.11), float(i + 3.11)]
+        elif field.data_type == DataType.ARRAY_STRING:
+            doc_fields[field.name] = [f"test_{i+1}", f"test_{i + 2}", f"test_{i + 3}"]
+        else:
+            raise ValueError(f"Unsupported field type: {field.data_type}")
+    for vector in schema.vectors:
+        if vector.data_type == DataType.VECTOR_FP16:
+            doc_vectors[vector.name] = generate_constant_vector(
+                i+1, vector.dimension, "float16"
+            )
+        elif vector.data_type == DataType.VECTOR_FP32:
+            doc_vectors[vector.name] = generate_constant_vector(
+                i+1, vector.dimension, "float32"
+            )
+        elif vector.data_type == DataType.VECTOR_INT8:
+            doc_vectors[vector.name] = generate_constant_vector(
+                i+1,
+                vector.dimension,
+                "int8",
+            )
+        elif vector.data_type == DataType.SPARSE_VECTOR_FP32:
+            doc_vectors[vector.name] = generate_sparse_vector(i+1)
+        elif vector.data_type == DataType.SPARSE_VECTOR_FP16:
+            doc_vectors[vector.name] = generate_sparse_vector(i+1)
+        else:
+            raise ValueError(f"Unsupported vector type: {vector.data_type}")
+    return doc_fields, doc_vectors
+
+
 def generate_doc(i: int, schema: CollectionSchema) -> Doc:
     doc_fields = {}
     doc_vectors = {}
@@ -183,78 +247,10 @@ def generate_doc_recall(i: int, schema: CollectionSchema) -> Doc:
 def generate_update_doc(i: int, schema: CollectionSchema) -> Doc:
     doc_fields = {}
     doc_vectors = {}
-    for field in schema.fields:
-        if field.data_type == DataType.BOOL:
-            doc_fields[field.name] = (i + 1) % 2 == 0
-        elif field.data_type == DataType.INT32:
-            doc_fields[field.name] = i + 1
-        elif field.data_type == DataType.UINT32:
-            doc_fields[field.name] = i + 1
-        elif field.data_type == DataType.INT64:
-            doc_fields[field.name] = i + 1
-        elif field.data_type == DataType.UINT64:
-            doc_fields[field.name] = i + 1
-        elif field.data_type == DataType.FLOAT:
-            doc_fields[field.name] = float(i + 1) + 0.1
-        elif field.data_type == DataType.DOUBLE:
-            doc_fields[field.name] = float(i) + 0.11
-        elif field.data_type == DataType.STRING:
-            doc_fields[field.name] = f"test_{i + 1}"
-        elif field.data_type == DataType.ARRAY_BOOL:
-            doc_fields[field.name] = [(i + 1) % 2 == 0, (i + 1) % 3 == 0]
-        elif field.data_type == DataType.ARRAY_INT32:
-            doc_fields[field.name] = [i + 1, (i + 1) + 1, (i + 1) + 2]
-        elif field.data_type == DataType.ARRAY_UINT32:
-            doc_fields[field.name] = [i + 1, (i + 1) + 1, (i + 1) + 2]
-        elif field.data_type == DataType.ARRAY_INT64:
-            doc_fields[field.name] = [i + 1, (i + 1) + 1, (i + 1) + 2]
-        elif field.data_type == DataType.ARRAY_UINT64:
-            doc_fields[field.name] = [i + 1, (i + 1) + 1, (i + 1) + 2]
-        elif field.data_type == DataType.ARRAY_FLOAT:
-            doc_fields[field.name] = [
-                float((i + 1) + 0.1),
-                float((i + 1) + 1.1),
-                float((i + 1) + 2.1),
-            ]
-        elif field.data_type == DataType.ARRAY_DOUBLE:
-            doc_fields[field.name] = [
-                float((i + 1) + 0.11),
-                float((i + 1) + 1.11),
-                float((i + 1) + 2.11),
-            ]
-        elif field.data_type == DataType.ARRAY_STRING:
-            doc_fields[field.name] = [
-                f"test_{i + 1}",
-                f"test_{(i + 1) + 1}",
-                f"test_{(i + 1) + 2}",
-            ]
-        else:
-            raise ValueError(f"Unsupported field type: {field.data_type}")
-    for vector in schema.vectors:
-        if vector.data_type == DataType.VECTOR_FP16:
-            doc_vectors[vector.name] = generate_constant_vector(
-                i + 1, vector.dimension, "float16"
-            )
-        elif vector.data_type == DataType.VECTOR_FP32:
-            doc_vectors[vector.name] = generate_constant_vector(
-                i + 1, vector.dimension, "float32"
-            )
-        elif vector.data_type == DataType.VECTOR_INT8:
-            doc_vectors[vector.name] = generate_constant_vector(
-                i + 1,
-                vector.dimension,
-                "int8",
-            )
-        elif vector.data_type == DataType.SPARSE_VECTOR_FP32:
-            doc_vectors[vector.name] = generate_sparse_vector(i)
-        elif vector.data_type == DataType.SPARSE_VECTOR_FP16:
-            doc_vectors[vector.name] = generate_sparse_vector(i)
-        else:
-            raise ValueError(f"Unsupported vector type: {vector.data_type}")
+    doc_fields, doc_vectors = generate_vectordict_update(i, schema)
     doc = Doc(id=str(i), fields=doc_fields, vectors=doc_vectors)
     return doc
-
-
+    
 def generate_doc_random(i, schema: CollectionSchema) -> Doc:
     doc_fields = {}
     doc_vectors = {}

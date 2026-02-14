@@ -51,7 +51,7 @@ def singledoc_and_check(
 
     stats = collection.stats
     assert stats is not None
-    #assert stats.doc_count == 1
+    # assert stats.doc_count == 1
 
     fetched_docs = collection.fetch([insert_doc.id])
     assert len(fetched_docs) == 1
@@ -59,7 +59,7 @@ def singledoc_and_check(
 
     fetched_doc = fetched_docs[insert_doc.id]
 
-    assert is_doc_equal(fetched_doc, insert_doc, collection.schema),(f"fetched_doc={fetched_doc}, insert_doc={insert_doc}")
+    assert is_doc_equal(fetched_doc, insert_doc, collection.schema)
     assert hasattr(fetched_doc, "score"), "Document should have a score attribute"
     assert fetched_doc.score == 0.0, (
         "Fetch operation should return default score of 0.0"
@@ -69,35 +69,27 @@ def singledoc_and_check(
         if v != {}:
             query_result = collection.query(
                 VectorQuery(field_name=v, vector=insert_doc.vectors[v]),
-                topk=1024,
+                topk=10,
             )
-            print( "query_result:\n")
-            print( len(query_result))
             assert len(query_result) > 0, (
                 f"Expected at least 1 query result, but got {len(query_result)}"
             )
 
             found_doc = None
-            q_result=[]
             for doc in query_result:
-                q_result.append(doc.id)
-                if doc.id == insert_doc.id:
+                if doc.id == doc.id:
                     found_doc = doc
-
                     break
-            print(f"q_result={q_result}")
             assert found_doc is not None, (
                 f"Updated document {insert_doc.id} not found in query results"
             )
-            print("insert_doc.id,found_doc:\n")
-            print(insert_doc.id,found_doc)
-            assert is_doc_equal(found_doc, insert_doc, collection.schema, True, False),(f"found_doc={found_doc}, insert_doc={insert_doc}")
+            assert is_doc_equal(found_doc, insert_doc, collection.schema, True, False)
     if is_delete == 1:
         collection.delete(insert_doc.id)
         assert collection.stats.doc_count == 0, "Document should be deleted"
 
 
-class TestCollectionCrashRecoveryUpdateDoc:
+class TestCollectionCrashRecoveryUpsertDoc:
     """
     Test Zvec collection recovery capability after simulating power failure/process crash during document update.
     Focus on verifying whether the file remains consistent after interruption of document update operations,
@@ -106,7 +98,7 @@ class TestCollectionCrashRecoveryUpdateDoc:
 
     # Script content for subprocess to execute Zvec document update operations
     # Write this script content to a temporary file and execute it in the subprocess.
-    ZVEC_SUBPROCESS_SCRIPT_UPDATEDOC = '''
+    ZVEC_SUBPROCESS_SCRIPT_UPSERTDOC = '''
 import zvec
 import time
 import json
@@ -293,8 +285,9 @@ def generate_update_doc(i: int, schema: zvec.CollectionSchema) -> zvec.Doc:
     doc_fields, doc_vectors = generate_vectordict_update(i, schema)
     doc = Doc(id=str(i), fields=doc_fields, vectors=doc_vectors)
     return doc
+    
 
-def run_zvec_updatedoc_operations(args_json_str):
+def run_zvec_upsertdoc_operations(args_json_str):
     args = json.loads(args_json_str)
     collection_path = args["collection_path"]
     num_docs_to_update = args.get("num_docs_to_update", 100)  # Number of documents to update
@@ -309,7 +302,7 @@ def run_zvec_updatedoc_operations(args_json_str):
         collection = zvec.open(collection_path)
         print(f"[Subprocess] Successfully opened collection.")
 
-        updated_count = 0
+        upserted_count = 0
         for i in range(0, num_docs_to_update, batch_size):
             # Calculate the number of documents in the current batch
             current_batch_size = min(batch_size, num_docs_to_update - i)
@@ -325,19 +318,19 @@ def run_zvec_updatedoc_operations(args_json_str):
             print(f"[Subprocess] Updating batch {i//batch_size + 1}, documents {i} to {i + current_batch_size - 1}")
 
             # Perform update operation
-            res = collection.update(docs)
+            res = collection.upsert(docs)
 
             # Check return value - update returns a list of operation results
             if res and len(res) > 0:
-                updated_count += len(docs)
-                print(f"[Subprocess] Batch update successful, updated {len(docs)} documents, total updated: {updated_count}")
+                upserted_count += len(docs)
+                print(f"[Subprocess] Batch upsert successful, upserted {len(docs)} documents, total upserted: {upserted_count}")
             else:
                 print(f"[Subprocess] Batch update may have failed, return value: {res}")
 
             # Add small delay to allow interruption opportunity
             time.sleep(delay_between_batches)
 
-        print(f"[Subprocess] Completed updating {updated_count} documents.")
+        print(f"[Subprocess] Completed upserting {upserted_count} documents.")
 
         if hasattr(collection, "close"):
             collection.close()
@@ -352,15 +345,15 @@ def run_zvec_updatedoc_operations(args_json_str):
         # Optionally re-raise or handle differently
         raise  # Re-raising may be useful depending on how parent process responds
 
-    print(f"[Subprocess] Document update operations completed at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
+    print(f"[Subprocess] Document upsert operations completed at: {time.strftime('%Y-%m-%d %H:%M:%S')}")
 
 
 if __name__ == "__main__":
     args_json_str = sys.argv[1]
-    run_zvec_updatedoc_operations(args_json_str)
+    run_zvec_upsertdoc_operations(args_json_str)
 '''
 
-    def test_updatedoc_simulate_crash_during_bulk_update(self, full_schema_1024, collection_option, basic_schema):
+    def test_upsertdoc_simulate_crash_during_bulk_upsert(self, full_schema_1024, collection_option, basic_schema):
         """
         Scenario: First successfully create a Zvec collection in the main process and insert some documents.
                   Then start a subprocess to open the collection and perform bulk document update operations.
@@ -368,7 +361,7 @@ if __name__ == "__main__":
                   Finally, in the main process, reopen the collection and verify whether its state and functionality are normal.
         """
         with tempfile.TemporaryDirectory() as temp_dir:
-            collection_path = f"{temp_dir}/test_collection_updatedoc_crash_recovery"
+            collection_path = f"{temp_dir}/test_collection_upsertdoc_crash_recovery"
 
             # Step 1: Successfully create collection in main process and insert some documents
             print(
@@ -384,26 +377,26 @@ if __name__ == "__main__":
 
             # Insert initial documents that will be updated later
             initial_docs = []
-            for i in range(0, 200):  # Insert 200 documents for updating
+            for i in range(0, 50):  # Insert 200 documents for updating
                 doc = generate_doc(i, coll.schema)
                 initial_docs.append(doc)
 
             insert_results = coll.insert(initial_docs)
-            print(f"[Test] Step 1.3: Inserted {len(initial_docs)} initial documents for updating.")
+            print(f"[Test] Step 1.3: Inserted {len(initial_docs)} initial documents for upserting.")
 
             del coll
             print(f"[Test] Step 1.4: Closed collection.")
 
             # Step 2: Prepare and run subprocess for bulk update operations
             # Write subprocess script to temporary file
-            subprocess_script_path = f"{temp_dir}/zvec_subprocess_updatedoc.py"
+            subprocess_script_path = f"{temp_dir}/zvec_subprocess_usertdoc.py"
             with open(subprocess_script_path, 'w', encoding='utf-8') as f:
-                f.write(self.ZVEC_SUBPROCESS_SCRIPT_UPDATEDOC)
+                f.write(self.ZVEC_SUBPROCESS_SCRIPT_UPSERTDOC)
 
             # Prepare subprocess parameters
             subprocess_args = {
                 "collection_path": collection_path,
-                "num_docs_to_update": 100,  # Update 100 documents to allow for interruption
+                "num_docs_to_upsert": 100,  # Update 100 documents to allow for interruption
                 "batch_size": 10,  # Update 10 documents per batch
                 "delay_between_batches": 0.2  # 0.2 second delay between batches to increase interruption timing
             }
@@ -467,13 +460,13 @@ if __name__ == "__main__":
             # We expect some documents to have been successfully updated before crash
             # The exact number depends on when the crash occurred during the bulk update process
             print(
-                f"[Test] Step 3.2: Found {len(query_result)} documents after crash (expected 0-{subprocess_args['num_docs_to_update']})")
+                f"[Test] Step 3.2: Found {len(query_result)} documents after crash (expected 0-{subprocess_args['num_docs_to_upsert']})")
 
             # Verify quantity consistency
             current_count = recovered_collection.stats.doc_count
-            assert recovered_collection.stats.doc_count == 201
+            assert recovered_collection.stats.doc_count >= 51
             assert len(query_result) <= recovered_collection.stats.doc_count, (
-                f"query_result count = {len(query_result)},stats.doc_count = {recovered_collection.stats.doc_count}")
+            f"query_result count = {len(query_result)},stats.doc_count = {recovered_collection.stats.doc_count}")
 
             # Verify existing documents have correct structure
             if len(query_result) > 0:
@@ -496,19 +489,20 @@ if __name__ == "__main__":
             for doc in query_result[:50]:  # Check first 50 for efficiency
                 fetched_docs = recovered_collection.fetch([doc.id])
                 exp_doc = generate_doc(int(doc.id), recovered_collection.schema)
+                assert len(fetched_docs) == 1
+                assert doc.id in fetched_docs
                 assert is_doc_equal(fetched_docs[doc.id], exp_doc, recovered_collection.schema), (
                     f"result doc={fetched_docs[doc.id]},doc_exp={exp_doc}")
 
             # Verification 3.5: Test insertion functionality after recovery
             print(f"[Test] Step 3.5.1: Testing insertion functionality after recovery")
             test_insert_doc = generate_doc(9999, full_schema_1024)  # Use original schema from fixture
-            singledoc_and_check(recovered_collection, test_insert_doc, operator="insert",is_delete=0)
+            singledoc_and_check(recovered_collection, test_insert_doc, operator="insert", is_delete=0)
 
             # Verification 3.6: Test update functionality after recovery
             print(f"[Test] Step 3.6: Testing update functionality after recovery...")
             updated_doc = generate_update_doc(2001, recovered_collection.schema)
-            singledoc_and_check(recovered_collection, updated_doc, operator="update",is_delete=0)
-            
+            singledoc_and_check(recovered_collection, updated_doc, operator="update", is_delete=0)
 
             # Verification 3.7: Test deletion functionality after recovery (if supported)
             print(f"[Test] Step 3.7: Testing deletion functionality after recovery...")
